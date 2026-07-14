@@ -1,6 +1,8 @@
-<p align="center"><img src="./data/images/banner.svg" alt="GPT-Image2 Prompt System" width="800" /></p>
+<p align="center"><img src="./data/images/visual-atlas/readme-cover.png" alt="Visual Atlas 视觉图鉴" width="1000" /></p>
 
-<h3 align="center">Prompt as Code | GPT-Image2 産業レベルのプロンプトエンジンとテンプレートライブラリ、400+ 件のリバースエンジニアリング事例、20+ 種の実務向けテンプレート</h3>
+<h1 align="center">Visual Atlas / 视觉图鉴</h1>
+
+<p align="center">画像知能のためのビジュアルアーカイブ。実例を見て、Prompt を読み、構造を再利用できます。</p>
 
 <p align="center">
   <a href="https://github.com/fuxiworkspace-lgtm/gpt-image2-visual-atlas"><img src="https://img.shields.io/github/stars/fuxiworkspace-lgtm/gpt-image2-visual-atlas?style=flat-square&color=rgb(25%2C%20121%2C%20255)" alt="Stars"></a>
@@ -13,16 +15,15 @@
   <a href="./README.md">English</a> | <a href="./README.zh-CN.md">简体中文</a> | <strong>日本語</strong>
 </p>
 
-> 新しいワークフローや活用例を不定期に更新しています。Star をいただけると励みになります。
-> 本プロジェクトは、GPT Image 2 を高いコストパフォーマンスで利用できる AI 集約プラットフォーム [Ciyuan API](https://ciyuan.today/) の支援を受けています。
+> Visual Atlas は、散在するビジュアルリファレンスを閲覧・分解・再利用できるシステムへ変換する、成長し続けるビジュアルアーカイブです。
 
-## 🌐 ビジュアル Web サイト
+## 🌐 プロダクトサイト
 
-[gpt-image2.canghe.ai](https://gpt-image2.canghe.ai/) では、プロダクトとして整備された体験でギャラリーを閲覧できます。大きなプレビューの確認、プロンプト全文のコピー、スタイルやシナリオによる絞り込み、Google ログイン後の生成テスト、GitHub 上の元ケースへの移動ができます。
+`npm run dev` でローカルサイトを起動すると、ギャラリーを閲覧できます。大きなプレビューの確認、プロンプト全文のコピー、スタイルやシナリオによる絞り込み、ログイン後の生成テスト、GitHub 上の元ケースへの移動ができます。
 
 <p align="center">
-  <a href="https://gpt-image2.canghe.ai/">
-    <img src="data/images/site-preview.png" alt="GPT-Image2 Gallery Web サイトのプレビュー" width="900">
+  <a href="https://github.com/fuxiworkspace-lgtm/gpt-image2-visual-atlas">
+    <img src="data/images/visual-atlas/readme-cover.png" alt="Visual Atlas プロダクトプレビュー" width="900">
   </a>
 </p>
 

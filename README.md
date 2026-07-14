@@ -1,39 +1,41 @@
-<p align="center"><img src="./data/images/banner.svg" alt="GPT-Image2 Prompt System" width="800" /></p>
+<p align="center"><img src="./data/images/visual-atlas/readme-cover.png" alt="Visual Atlas 视觉图鉴" width="1000" /></p>
 
-<h3 align="center">Prompt as Code | GPT-Image2 Industrial Prompt Engine & Template Library, 500+ Reverse-Engineered Cases, 20+ Industrial Templates</h3>
+<h1 align="center">Visual Atlas / 视觉图鉴</h1>
+
+<p align="center">一座关于图像智能的视觉图鉴：浏览真实案例，复制 Prompt，在线测试生图，并追踪一张图片背后的结构。</p>
 
 <p align="center">
   <a href="https://github.com/fuxiworkspace-lgtm/gpt-image2-visual-atlas"><img src="https://img.shields.io/github/stars/fuxiworkspace-lgtm/gpt-image2-visual-atlas?style=flat-square&color=rgb(25%2C%20121%2C%20255)" alt="Stars"></a>
   <a href="https://github.com/fuxiworkspace-lgtm/gpt-image2-visual-atlas"><img src="https://img.shields.io/github/forks/fuxiworkspace-lgtm/gpt-image2-visual-atlas?style=flat-square&color=green" alt="Forks"></a>
   <a href="https://github.com/fuxiworkspace-lgtm/gpt-image2-visual-atlas"><img src="https://img.shields.io/badge/Cases-514-blueviolet?style=flat-square" alt="Cases"></a>
   <a href="https://github.com/fuxiworkspace-lgtm/gpt-image2-visual-atlas"><img src="https://img.shields.io/badge/100%25-Original_AI_Rewritten-green?style=flat-square" alt="Original"></a>
-  <a href="https://github.com/sponsors/freestylefly"><img src="https://img.shields.io/badge/Sponsor-GitHub%20Sponsors-ff69b4?style=flat-square" alt="Sponsor"></a>
 </p>
 
 <p align="center">
   <strong>English</strong> | <a href="./README.zh-CN.md">简体中文</a> | <a href="./README.ja.md">日本語</a>
 </p>
 
-> Updated irregularly with new workflows. Stars are welcome.
-> This project is sponsored by [Ciyuan API](https://ciyuan.today/), an AI aggregation platform for cost-effective GPT Image 2 access.
+> Visual Atlas is a living archive for image intelligence. It turns scattered visual references into a navigable, inspectable, reusable system.
 
-## 🌐 Visual Website
+## 🌐 Product Website
 
-Use the live site at [gpt-image2.canghe.ai](https://gpt-image2.canghe.ai/) to browse the gallery as a product experience: open large previews, copy full prompts, filter by style or scenario, test generation after Google sign-in, and jump back to the source case on GitHub.
+Run the local site with `npm run dev` to browse the gallery as a product experience: open large previews, copy full prompts, filter by style or scenario, test generation after sign-in, and jump back to the source case on GitHub.
 
 <p align="center">
-  <a href="https://gpt-image2.canghe.ai/">
-    <img src="data/images/site-preview.png" alt="GPT-Image2 Gallery website preview" width="900">
+  <a href="https://github.com/fuxiworkspace-lgtm/gpt-image2-visual-atlas">
+    <img src="data/images/visual-atlas/readme-cover.png" alt="Visual Atlas product preview" width="900">
   </a>
 </p>
 
-## WeChat Official Account
+## 🧭 What Visual Atlas Is
 
-Search **苍何** on WeChat or scan the QR card below. To join the GPT-Image2 community group, follow the account and reply with **gpt-image-2交流群**.
+Visual Atlas is built around three movements:
 
-<p align="center">
-  <img src="data/images/wechat-community.jpg" alt="Canghe WeChat community QR card" width="760">
-</p>
+1. **Look** — browse real generated cases as a visual archive, not a flat list.
+2. **Read** — inspect the composition, style, scenario, and prompt structure behind each image.
+3. **Remix** — copy, adapt, and test the structure in your own image workflow.
+
+The repository keeps the visual gallery, structured case data, reusable templates, and Agent Skill in one place so that a good image can become a repeatable method.
 
 ## ❤️ Sponsors
 
@@ -52,9 +54,9 @@ Search **苍何** on WeChat or scan the QR card below. To join the GPT-Image2 co
 
 ## ⚡️ Project Vision
 
-After GPT-Image2 became widely available, AI image generation moved from "can it make an image?" to "can it make stable, controllable, reusable images?" This project turns scattered community examples into Prompt-as-Code assets that are easier for agents and automation workflows to reuse.
+Image generation is moving from “can it make an image?” to “can we understand, control, and reuse the visual logic behind it?” Visual Atlas turns scattered examples into an inspectable visual archive and a reusable prompt system.
 
-The core goal is simple: compress prose-style prompts into structured protocols. When you need batch generation, template systems, or production workflows, this structure is more valuable than a pile of isolated examples.
+The core goal is to make visual intelligence legible: connect the final image with its composition, style, scenario, prompt, and reusable template instead of leaving each result as an isolated artifact.
 
 - 🧱 Atomic schema: split subjects, lighting, materials, layout, and visual details into composable parts
 - ⚙️ Workflow friendly: designed for agents, scripts, and automation systems
@@ -390,7 +392,7 @@ A multi-card, unified-style case for studying batch generation and series design
 A strong hybrid of brand narrative, structural breakdown, and commercial presentation. Useful as an "infographic + brand visual" reference.
 [View full case](docs/gallery-part-2.md#case-310)
 
-### Canghe Original Tests
+### Visual Atlas Original Tests
 
 <table>
   <tr>

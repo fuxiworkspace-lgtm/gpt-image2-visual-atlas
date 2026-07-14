@@ -1,6 +1,8 @@
-<p align="center"><img src="./data/images/banner.svg" alt="GPT-Image2 Prompt System" width="800" /></p>
+<p align="center"><img src="./data/images/visual-atlas/readme-cover.png" alt="Visual Atlas 视觉图鉴" width="1000" /></p>
 
-<h3 align="center">Prompt as Code | GPT-Image2 工业级提示词引擎与模板库，500+ 个案例逆向工程，20+ 套工业级模板</h3>
+<h1 align="center">Visual Atlas / 视觉图鉴</h1>
+
+<p align="center">一座关于图像智能的视觉图鉴：浏览真实案例，复制 Prompt，在线测试生图，并追踪一张图片背后的结构。</p>
 
 <p align="center">
   <a href="https://github.com/fuxiworkspace-lgtm/gpt-image2-visual-atlas"><img src="https://img.shields.io/github/stars/fuxiworkspace-lgtm/gpt-image2-visual-atlas?style=flat-square&color=rgb(25%2C%20121%2C%20255)" alt="Stars"></a>
@@ -14,16 +16,15 @@
   <a href="./README.md">English</a> | <strong>简体中文</strong> | <a href="./README.ja.md">日本語</a>
 </p>
 
-> 不定期更新最新的玩法，欢迎star。
-> 本项目由 [词元 API](https://ciyuan.today/) 提供赞助支持。词元 API 是一个 AI 聚合平台，可以高性价比使用 GPT Image 2。
+> Visual Atlas 是一座持续生长的视觉档案库，把分散的视觉参考变成可以浏览、拆解和复用的系统。
 
-## 🌐 可视化网站
+## 🌐 产品网站
 
-访问 [gpt-image2.canghe.ai](https://gpt-image2.canghe.ai/) 可以用产品化方式浏览案例：查看大图、复制完整 Prompt、按风格或场景筛选、登录后测试生成，并快速跳回 GitHub 源案例。
+运行 `npm run dev` 后即可打开 Visual Atlas：查看大图、复制完整 Prompt、按风格或场景筛选、登录后测试生成，并快速跳回 GitHub 源案例。
 
 <p align="center">
-  <a href="https://gpt-image2.canghe.ai/">
-    <img src="data/images/site-preview.png" alt="GPT-Image2 Gallery 网站预览" width="900">
+  <a href="https://github.com/fuxiworkspace-lgtm/gpt-image2-visual-atlas">
+    <img src="data/images/visual-atlas/readme-cover.png" alt="Visual Atlas 产品预览" width="900">
   </a>
 </p>
 
