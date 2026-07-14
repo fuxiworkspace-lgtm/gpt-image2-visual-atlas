@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "repository": "https://github.com/freestylefly/awesome-gpt-image-2",
+  "repository": "https://github.com/fuxiworkspace-lgtm/gpt-image2-visual-atlas",
   "templateDocument": "docs/templates.md",
   "tagLabels": {
     "Art": { "en": "Art", "zh": "艺术" },

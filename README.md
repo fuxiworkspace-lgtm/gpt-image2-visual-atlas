@@ -3,10 +3,10 @@
 <h3 align="center">Prompt as Code | GPT-Image2 Industrial Prompt Engine & Template Library, 500+ Reverse-Engineered Cases, 20+ Industrial Templates</h3>
 
 <p align="center">
-  <a href="https://github.com/freestylefly/awesome-gpt-image-2"><img src="https://img.shields.io/github/stars/freestylefly/awesome-gpt-image-2?style=flat-square&color=rgb(25%2C%20121%2C%20255)" alt="Stars"></a>
-  <a href="https://github.com/freestylefly/awesome-gpt-image-2"><img src="https://img.shields.io/github/forks/freestylefly/awesome-gpt-image-2?style=flat-square&color=green" alt="Forks"></a>
-  <a href="https://github.com/freestylefly/awesome-gpt-image-2"><img src="https://img.shields.io/badge/Cases-514-blueviolet?style=flat-square" alt="Cases"></a>
-  <a href="https://github.com/freestylefly/awesome-gpt-image-2"><img src="https://img.shields.io/badge/100%25-Original_AI_Rewritten-green?style=flat-square" alt="Original"></a>
+  <a href="https://github.com/fuxiworkspace-lgtm/gpt-image2-visual-atlas"><img src="https://img.shields.io/github/stars/fuxiworkspace-lgtm/gpt-image2-visual-atlas?style=flat-square&color=rgb(25%2C%20121%2C%20255)" alt="Stars"></a>
+  <a href="https://github.com/fuxiworkspace-lgtm/gpt-image2-visual-atlas"><img src="https://img.shields.io/github/forks/fuxiworkspace-lgtm/gpt-image2-visual-atlas?style=flat-square&color=green" alt="Forks"></a>
+  <a href="https://github.com/fuxiworkspace-lgtm/gpt-image2-visual-atlas"><img src="https://img.shields.io/badge/Cases-514-blueviolet?style=flat-square" alt="Cases"></a>
+  <a href="https://github.com/fuxiworkspace-lgtm/gpt-image2-visual-atlas"><img src="https://img.shields.io/badge/100%25-Original_AI_Rewritten-green?style=flat-square" alt="Original"></a>
   <a href="https://github.com/sponsors/freestylefly"><img src="https://img.shields.io/badge/Sponsor-GitHub%20Sponsors-ff69b4?style=flat-square" alt="Sponsor"></a>
 </p>
 
@@ -232,7 +232,7 @@ The prompt body remains in the original template document for now. This homepage
 
 This repository includes an agent skill for choosing GPT-Image2 styles, templates, categories, and scene tags from the same data used by the website.
 
-Package links: [npm](https://www.npmjs.com/package/gpt-image-2-style-library) / [GitHub Packages](https://github.com/freestylefly/awesome-gpt-image-2/pkgs/npm/gpt-image-2-style-library)
+Package links: [npm](https://www.npmjs.com/package/gpt-image-2-style-library) / [GitHub Packages](https://github.com/fuxiworkspace-lgtm/gpt-image2-visual-atlas/pkgs/npm/gpt-image-2-style-library)
 
 <p align="center">
   <img src="agents/skills/gpt-image-2-style-library/assets/city-life-system-map.png" alt="City life system map generated with the GPT-Image2 style library skill" width="760">
@@ -245,13 +245,13 @@ Package links: [npm](https://www.npmjs.com/package/gpt-image-2-style-library) / 
 Recommended for Claude Code, Codex, Cursor, and other tools supported by [`skills`](https://www.npmjs.com/package/skills):
 
 ```bash
-npx skills add freestylefly/awesome-gpt-image-2 --skill gpt-image-2-style-library --agent claude-code codex --global --yes --copy
+npx skills add fuxiworkspace-lgtm/gpt-image2-visual-atlas --skill gpt-image-2-style-library --agent claude-code codex --global --yes --copy
 ```
 
 Install to every supported local agent:
 
 ```bash
-npx skills add freestylefly/awesome-gpt-image-2 --global --all --copy
+npx skills add fuxiworkspace-lgtm/gpt-image2-visual-atlas --global --all --copy
 ```
 
 ### Claude Code Plugin Marketplace
@@ -259,7 +259,7 @@ npx skills add freestylefly/awesome-gpt-image-2 --global --all --copy
 Run these commands inside Claude Code:
 
 ```text
-/plugin marketplace add freestylefly/awesome-gpt-image-2
+/plugin marketplace add fuxiworkspace-lgtm/gpt-image2-visual-atlas
 /plugin install gpt-image-2-style-library@awesome-gpt-image-2
 ```
 
@@ -517,7 +517,7 @@ All prompt cases and generated images in this repository were initially inspired
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=freestylefly/awesome-gpt-image-2&type=Date)](https://star-history.com/#freestylefly/awesome-gpt-image-2&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=fuxiworkspace-lgtm/gpt-image2-visual-atlas&type=Date)](https://star-history.com/#fuxiworkspace-lgtm/gpt-image2-visual-atlas&Date)
 
 ## 📜 License
 

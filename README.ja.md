@@ -3,10 +3,10 @@
 <h3 align="center">Prompt as Code | GPT-Image2 産業レベルのプロンプトエンジンとテンプレートライブラリ、400+ 件のリバースエンジニアリング事例、20+ 種の実務向けテンプレート</h3>
 
 <p align="center">
-  <a href="https://github.com/freestylefly/awesome-gpt-image-2"><img src="https://img.shields.io/github/stars/freestylefly/awesome-gpt-image-2?style=flat-square&color=rgb(25%2C%20121%2C%20255)" alt="Stars"></a>
-  <a href="https://github.com/freestylefly/awesome-gpt-image-2"><img src="https://img.shields.io/github/forks/freestylefly/awesome-gpt-image-2?style=flat-square&color=green" alt="Forks"></a>
-  <a href="https://github.com/freestylefly/awesome-gpt-image-2"><img src="https://img.shields.io/badge/Cases-484-blueviolet?style=flat-square" alt="Cases"></a>
-  <a href="https://github.com/freestylefly/awesome-gpt-image-2"><img src="https://img.shields.io/badge/100%25-Original_AI_Rewritten-green?style=flat-square" alt="Original"></a>
+  <a href="https://github.com/fuxiworkspace-lgtm/gpt-image2-visual-atlas"><img src="https://img.shields.io/github/stars/fuxiworkspace-lgtm/gpt-image2-visual-atlas?style=flat-square&color=rgb(25%2C%20121%2C%20255)" alt="Stars"></a>
+  <a href="https://github.com/fuxiworkspace-lgtm/gpt-image2-visual-atlas"><img src="https://img.shields.io/github/forks/fuxiworkspace-lgtm/gpt-image2-visual-atlas?style=flat-square&color=green" alt="Forks"></a>
+  <a href="https://github.com/fuxiworkspace-lgtm/gpt-image2-visual-atlas"><img src="https://img.shields.io/badge/Cases-484-blueviolet?style=flat-square" alt="Cases"></a>
+  <a href="https://github.com/fuxiworkspace-lgtm/gpt-image2-visual-atlas"><img src="https://img.shields.io/badge/100%25-Original_AI_Rewritten-green?style=flat-square" alt="Original"></a>
 </p>
 
 <p align="center">
@@ -229,7 +229,7 @@ GPT-Image2 が広く利用できるようになったことで、AI 画像生成
 
 このリポジトリには、Web サイトと同じデータを使って GPT-Image2 のスタイル、テンプレート、カテゴリ、シーンタグを選定するための Agent Skill が含まれています。
 
-パッケージリンク：[npm](https://www.npmjs.com/package/gpt-image-2-style-library) / [GitHub Packages](https://github.com/freestylefly/awesome-gpt-image-2/pkgs/npm/gpt-image-2-style-library)
+パッケージリンク：[npm](https://www.npmjs.com/package/gpt-image-2-style-library) / [GitHub Packages](https://github.com/fuxiworkspace-lgtm/gpt-image2-visual-atlas/pkgs/npm/gpt-image-2-style-library)
 
 <p align="center">
   <img src="agents/skills/gpt-image-2-style-library/assets/city-life-system-map.png" alt="GPT-Image2 Style Library Skill で生成した都市生命システムマップ" width="760">
@@ -242,13 +242,13 @@ GPT-Image2 が広く利用できるようになったことで、AI 画像生成
 Claude Code、Codex、Cursor、および [`skills`](https://www.npmjs.com/package/skills) が対応するその他のツールには、次の方法を推奨します。
 
 ```bash
-npx skills add freestylefly/awesome-gpt-image-2 --skill gpt-image-2-style-library --agent claude-code codex --global --yes --copy
+npx skills add fuxiworkspace-lgtm/gpt-image2-visual-atlas --skill gpt-image-2-style-library --agent claude-code codex --global --yes --copy
 ```
 
 対応するすべてのローカル Agent にインストールする場合：
 
 ```bash
-npx skills add freestylefly/awesome-gpt-image-2 --global --all --copy
+npx skills add fuxiworkspace-lgtm/gpt-image2-visual-atlas --global --all --copy
 ```
 
 ### Claude Code Plugin Marketplace
@@ -256,7 +256,7 @@ npx skills add freestylefly/awesome-gpt-image-2 --global --all --copy
 Claude Code 内で次のコマンドを実行します。
 
 ```text
-/plugin marketplace add freestylefly/awesome-gpt-image-2
+/plugin marketplace add fuxiworkspace-lgtm/gpt-image2-visual-atlas
 /plugin install gpt-image-2-style-library@awesome-gpt-image-2
 ```
 
@@ -547,7 +547,7 @@ GOOGLE_ANALYTICS_REFRESH_TOKEN=
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=freestylefly/awesome-gpt-image-2&type=Date)](https://star-history.com/#freestylefly/awesome-gpt-image-2&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=fuxiworkspace-lgtm/gpt-image2-visual-atlas&type=Date)](https://star-history.com/#fuxiworkspace-lgtm/gpt-image2-visual-atlas&Date)
 
 ## 📜 ライセンス
 

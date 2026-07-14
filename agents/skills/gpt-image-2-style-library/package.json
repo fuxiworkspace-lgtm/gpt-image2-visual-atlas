@@ -6,12 +6,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/freestylefly/awesome-gpt-image-2.git",
+    "url": "git+https://github.com/fuxiworkspace-lgtm/gpt-image2-visual-atlas.git",
     "directory": "agents/skills/gpt-image-2-style-library"
   },
-  "homepage": "https://github.com/freestylefly/awesome-gpt-image-2#agent-skill",
+  "homepage": "https://github.com/fuxiworkspace-lgtm/gpt-image2-visual-atlas#agent-skill",
   "bugs": {
-    "url": "https://github.com/freestylefly/awesome-gpt-image-2/issues"
+    "url": "https://github.com/fuxiworkspace-lgtm/gpt-image2-visual-atlas/issues"
   },
   "keywords": [
     "agent-skill",

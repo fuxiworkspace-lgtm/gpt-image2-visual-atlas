@@ -37,7 +37,7 @@ import { isSupabaseConfigured, supabase } from './supabaseClient';
 import wechatCommunityImage from './assets/wechat-community.jpg';
 import skillExampleImage from '../agents/skills/gpt-image-2-style-library/assets/city-life-system-map.png';
 
-const fallbackRepoUrl = 'https://github.com/freestylefly/awesome-gpt-image-2';
+const fallbackRepoUrl = 'https://github.com/fuxiworkspace-lgtm/gpt-image2-visual-atlas';
 const sponsorUrl = 'https://apimart.ai/register?aff=oQgzUQ';
 const membershipUrl = 'https://canghe.ai/membership/';
 const gaMeasurementId = import.meta.env.VITE_GA_MEASUREMENT_ID;
@@ -47,7 +47,7 @@ const watchaLogoUrl =
 const copy = {
   en: {
     loading: 'Loading GPT-Image2 cases...',
-    brand: 'GPT-Image2 Gallery',
+    brand: 'Visual Atlas',
     navCases: 'Cases',
     navSkill: 'Skill',
     navTemplates: 'Templates',
@@ -55,10 +55,10 @@ const copy = {
     navSponsor: 'API',
     navMembership: 'Membership',
     communityQrAlt: 'WeChat community invite card for GPT-Image2',
-    eyebrow: 'Live GPT-Image2 prompt gallery',
-    title: 'From viral images to reusable prompts.',
+    eyebrow: 'A living archive of image intelligence',
+    title: 'Visual Atlas.',
     subtitle:
-      'A visual workspace for GPT-Image2 creation: browse real cases, copy prompts, test image generation, explore industrial templates, and join the creator community.',
+      'A visual atlas for image intelligence: browse real cases, copy prompts, test generations, and trace the structures behind the image.',
     explore: 'Explore cases',
     githubProject: 'GitHub project',
     sponsorProject: 'API',
@@ -66,8 +66,8 @@ const copy = {
     cases: 'cases',
     categories: 'categories',
     templates: 'templates',
-    sectionEyebrow: 'Copy, filter, remix',
-    sectionTitle: 'Viral cases with prompts one click away.',
+    sectionEyebrow: 'Browse the archive',
+    sectionTitle: 'Cases, structures, and prompts in motion.',
     templateEyebrow: '20+ industrial prompt templates',
     templateTitle: 'Start from a proven template, then remix the case library.',
     templateSubtitle:
@@ -260,7 +260,7 @@ const copy = {
   },
   zh: {
     loading: '正在加载 GPT-Image2 案例...',
-    brand: 'GPT-Image2 画廊',
+    brand: 'Visual Atlas / 视觉图鉴',
     navCases: '案例',
     navSkill: '技能',
     navTemplates: '模板',
@@ -268,10 +268,10 @@ const copy = {
     navSponsor: 'API',
     navMembership: '会员',
     communityQrAlt: 'GPT-Image2 微信交流群邀请卡',
-    eyebrow: '实时更新的 GPT-Image2 提示词画廊',
-    title: '从爆款图片，到可复用 Prompt。',
+    eyebrow: '一座持续生长的视觉档案库',
+    title: 'Visual Atlas\n视觉图鉴',
     subtitle:
-      '一个面向 GPT-Image2 创作的可视化工作台：浏览真实案例、复制 Prompt、在线测试生图、查看工业级模板，并加入创作者交流群。',
+      '一座关于图像智能的视觉图鉴：浏览真实案例、复制 Prompt、在线测试生图，并追踪一张图片背后的结构。',
     explore: '浏览案例',
     githubProject: 'GitHub 项目',
     sponsorProject: 'API',
@@ -279,8 +279,8 @@ const copy = {
     cases: '个案例',
     categories: '个分类',
     templates: '套模板',
-    sectionEyebrow: '复制、筛选、复用',
-    sectionTitle: '爆款案例和 Prompt，一键可取。',
+    sectionEyebrow: '进入视觉档案',
+    sectionTitle: '案例、结构与 Prompt，正在发生。',
     templateEyebrow: '20+ 套工业级提示词模板',
     templateTitle: '先用成熟模板起稿，再从案例库里继续 remix。',
     templateSubtitle:
@@ -952,14 +952,21 @@ function formatTemplatePrompt(item, language, styleLibrary) {
 
 function Hero({ latestCases, language, repoUrl, totalCases, categoryCount, onOpenCase }) {
   const t = copy[language];
+  const atlasCardImages = [
+    '/images/visual-atlas/va-case-01.jpg',
+    '/images/visual-atlas/va-case-02.jpg',
+    '/images/visual-atlas/va-case-03.jpg'
+  ];
 
   return (
     <section className="hero">
+      <img className="heroAtlasImage" src="/images/visual-atlas/va-hero.png" alt="" aria-hidden="true" />
+      <div className="heroAtlasShade" />
       <div className="heroGlow heroGlowA" />
       <div className="heroGlow heroGlowB" />
       <div className="scanGrid" />
       <div className="heroCopy">
-        <div className="eyebrow">
+        <div className="eyebrow heroEyebrow">
           <Sparkles size={16} />
           {t.eyebrow}
         </div>
@@ -992,7 +999,7 @@ function Hero({ latestCases, language, repoUrl, totalCases, categoryCount, onOpe
         </div>
       </div>
       <div className="heroDeck" aria-label="Latest GPT-Image2 cases">
-        {latestCases.slice(0, 5).map((caseItem, index) => (
+        {latestCases.slice(0, 3).map((caseItem, index) => (
           <button
             className={`heroCard heroCard${index + 1}`}
             type="button"
@@ -1000,7 +1007,7 @@ function Hero({ latestCases, language, repoUrl, totalCases, categoryCount, onOpe
             onClick={() => onOpenCase(caseItem)}
             key={caseItem.id}
           >
-            <img src={caseItem.image} alt={caseItem.imageAlt} />
+            <img src={atlasCardImages[index]} alt={caseItem.imageAlt} />
             <span>{language === 'zh' ? '案例' : 'Case'} {caseItem.id}</span>
           </button>
         ))}
@@ -2462,7 +2469,7 @@ function SkillSection({ language, repoUrl }) {
   const t = copy[language];
   const [commandCopied, setCommandCopied] = useState(false);
   const installCommand =
-    'npx skills add freestylefly/awesome-gpt-image-2 --skill gpt-image-2-style-library --agent claude-code codex --global --yes --copy';
+    'npx skills add fuxiworkspace-lgtm/gpt-image2-visual-atlas --skill gpt-image-2-style-library --agent claude-code codex --global --yes --copy';
   const skillSourceUrl = `${repoUrl}/tree/main/agents/skills/gpt-image-2-style-library`;
   const npmUrl = 'https://www.npmjs.com/package/gpt-image-2-style-library';
 
