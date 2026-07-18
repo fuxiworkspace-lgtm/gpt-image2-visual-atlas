@@ -2,9 +2,13 @@ import { createClient } from '@supabase/supabase-js';
 
 let adminClient;
 
+function normalizeEnvValue(value) {
+  return String(value || '').trim().replace(/^=+/, '');
+}
+
 export function getSupabaseConfig() {
-  const url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const url = normalizeEnvValue(process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL);
+  const serviceRoleKey = normalizeEnvValue(process.env.SUPABASE_SERVICE_ROLE_KEY);
   return {
     url,
     serviceRoleKey,

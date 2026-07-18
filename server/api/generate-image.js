@@ -1,18 +1,24 @@
 import {
   getAuthContext,
   getProfileById,
+  getSupabaseAdminClient,
   isSupabaseServerConfigured
 } from './_lib/supabase.js';
 
 const MAX_PROMPT_LENGTH = 6000;
+const IMAGE_REQUEST_TIMEOUT_MS = 45000;
 const DEFAULT_CIYUAN_BASE_URL = 'https://ciyuan.today';
+const DEFAULT_OPENAI_BASE_URL = 'https://api.openai.com/v1';
 
 function json(res, status, payload) {
   res.status(status).json(payload);
 }
 
 function isServerConfigured() {
-  return Boolean(process.env.CIYUAN_API_KEY && isSupabaseServerConfigured());
+  return Boolean(
+    (process.env.OPENAI_API_KEY || process.env.CIYUAN_API_KEY) &&
+    isSupabaseServerConfigured()
+  );
 }
 
 async function readBody(req) {
@@ -123,28 +129,69 @@ async function releaseReservation(client, reservationId, errorCode) {
   }
 }
 
-async function generateImage(prompt) {
-  const baseUrl = (process.env.CIYUAN_BASE_URL || DEFAULT_CIYUAN_BASE_URL).replace(/\/$/, '');
-  const response = await fetch(`${baseUrl}/v1/images/generations`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${process.env.CIYUAN_API_KEY}`,
-      'Content-Type': 'application/json',
-      Accept: 'application/json'
-    },
-    body: JSON.stringify({
-      model: 'gpt-image-2',
-      prompt,
-      n: 1,
-      size: '1024x1024',
-      quality: 'low',
-      format: 'jpeg'
-    })
-  });
-  const payload = await response.json().catch(() => ({}));
-  const b64 = payload?.data?.[0]?.b64_json;
+async function getImageProvider() {
+  const fallback = process.env.OPENAI_API_KEY ? 'openai' : 'ciyuan';
+  const client = getSupabaseAdminClient();
+  if (!client) return fallback;
+  const { data } = await client
+    .from('image_provider_settings')
+    .select('provider')
+    .eq('id', true)
+    .maybeSingle();
+  return data?.provider === 'ciyuan' && process.env.CIYUAN_API_KEY ? 'ciyuan' : fallback;
+}
 
-  if (!response.ok || !b64) {
+async function generateImage(prompt) {
+  const provider = await getImageProvider();
+  const isOpenAI = provider === 'openai';
+  const baseUrl = (isOpenAI
+    ? (process.env.OPENAI_BASE_URL || DEFAULT_OPENAI_BASE_URL)
+    : (process.env.CIYUAN_BASE_URL || DEFAULT_CIYUAN_BASE_URL)
+  ).replace(/\/$/, '');
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), IMAGE_REQUEST_TIMEOUT_MS);
+  let response;
+
+  try {
+    response = await fetch(`${baseUrl}${isOpenAI ? '/images/generations' : '/v1/images/generations'}`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${isOpenAI ? process.env.OPENAI_API_KEY : process.env.CIYUAN_API_KEY}`,
+        'Content-Type': 'application/json',
+        Accept: 'application/json'
+      },
+      signal: controller.signal,
+      body: JSON.stringify({
+        model: isOpenAI ? (process.env.OPENAI_IMAGE_MODEL || 'gpt-image-2') : 'gpt-image-2',
+        prompt,
+        n: 1,
+        size: '1024x1024',
+        quality: 'low',
+        ...(isOpenAI ? { output_format: 'jpeg' } : { format: 'jpeg' })
+      })
+    });
+  } catch (error) {
+    if (error?.name === 'AbortError') {
+      const timeoutError = new Error('Image provider timed out');
+      timeoutError.status = 504;
+      timeoutError.code = 'UPSTREAM_TIMEOUT';
+      throw timeoutError;
+    }
+    const networkError = new Error('Image provider could not be reached');
+    networkError.status = 503;
+    networkError.code = 'UPSTREAM_UNAVAILABLE';
+    networkError.cause = error;
+    throw networkError;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+  const payload = await response.json().catch(() => ({}));
+  const item = Array.isArray(payload?.data) ? payload.data[0] : payload?.data;
+  const b64 = item?.b64_json || payload?.b64_json || '';
+  const imageUrl = item?.url || item?.image_url || payload?.url || payload?.image_url || '';
+  const image = b64 ? `data:image/jpeg;base64,${b64}` : imageUrl;
+
+  if (!response.ok || !image) {
     const message = payload?.error?.message || payload?.message || `Image generation failed with status ${response.status}`;
     const error = new Error(message);
     error.status = response.status;
@@ -153,7 +200,7 @@ async function generateImage(prompt) {
     throw error;
   }
 
-  return `data:image/jpeg;base64,${b64}`;
+  return { image, provider };
 }
 
 export default async function handler(req, res) {
@@ -218,11 +265,12 @@ export default async function handler(req, res) {
   }
 
   try {
-    const image = await generateImage(prompt);
+    const result = await generateImage(prompt);
     await completeReservation(auth.client, reservation.reservationId);
     return json(res, 200, {
       ok: true,
-      image,
+      image: result.image,
+      provider: result.provider,
       user: profileFromReservation(auth.profile, reservation)
     });
   } catch (error) {
@@ -233,12 +281,22 @@ export default async function handler(req, res) {
       message: String(error?.message || 'unknown').slice(0, 240)
     });
 
-    const errorCode = error?.status === 429 ? 'UPSTREAM_BUSY' : 'GENERATION_FAILED';
+    const upstreamUnavailable = [502, 503, 504, 522, 524].includes(Number(error?.status))
+      || error?.code === 'UPSTREAM_TIMEOUT'
+      || error?.code === 'UPSTREAM_UNAVAILABLE';
+    const errorCode = error?.status === 429
+      ? 'UPSTREAM_BUSY'
+      : upstreamUnavailable
+        ? 'UPSTREAM_UNAVAILABLE'
+        : 'GENERATION_FAILED';
     await releaseReservation(auth.client, reservation.reservationId, errorCode);
 
     const refreshedProfile = await getProfileById(auth.user.id).catch(() => null);
     if (error?.status === 429) {
       return json(res, 503, { ok: false, error: 'UPSTREAM_BUSY', user: refreshedProfile });
+    }
+    if (upstreamUnavailable) {
+      return json(res, 503, { ok: false, error: 'UPSTREAM_UNAVAILABLE', user: refreshedProfile });
     }
     return json(res, 502, { ok: false, error: 'GENERATION_FAILED', user: refreshedProfile });
   }

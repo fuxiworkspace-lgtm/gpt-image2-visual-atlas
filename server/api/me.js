@@ -53,7 +53,21 @@ async function getAccountExtras(client, userId) {
 
 async function profileWithExtras(client, profile) {
   if (!profile?.id) return profile;
-  const extras = await getAccountExtras(client, profile.id);
+  let extras;
+  try {
+    extras = await getAccountExtras(client, profile.id);
+  } catch (error) {
+    // Account usage history is auxiliary. A missing RPC/table must not make a
+    // valid Supabase session look signed out in the client.
+    console.warn('Failed to load account extras; returning base profile', {
+      userId: profile.id,
+      message: String(error?.message || 'unknown').slice(0, 240)
+    });
+    extras = {
+      usage: { totalGenerations: 0, totalGenerationCredits: 0 },
+      recentTransactions: []
+    };
+  }
   return {
     ...profile,
     ...extras
