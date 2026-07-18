@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>后台管理 · Aing CMS</title>
+<style>
+/* ============================================================
+   Aing CMS · 后台管理（本地最简版）
+   调性：企业感 / 高效 / 干练（与前台区分）
+   数据：localStorage 存储 · base64 图片内嵌
+   ============================================================ */
+:root {
+  --bg: #f4f5f7;
+  --panel: #ffffff;
+  --fg: #1a1d24;
+  --fg-soft: #5a606e;
+  --fg-muted: #8b91a1;
+  --border: #e3e6ec;
+  --border-strong: #c9cdd6;
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --danger: #dc2626;
+  --success: #16a34a;
+  --amber: #d4913e;
+  --serif: "PingFang SC", "Noto Sans SC", -apple-system, "Helvetica Neue", sans-serif;
+  --mono: "SF Mono", "Menlo", "Consolas", monospace;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { height:100%; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--serif);
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ========== 登录页 ========== */
+.login-wrap {
+  min-height:100vh;
+  display:flex; align-items:center; justify-content:center;
+  background:linear-gradient(135deg, #1a1d24 0%, #2d3140 100%);
+  padding:40px 20px;
+}
+.login-card {
+  width:100%; max-width:400px;
+  background:var(--panel);
+  border-radius:8px;
+  padding:48px 40px;
+  box-shadow:0 20px 60px rgba(0,0,0,0.3);
+}
+.login-mark {
+  text-align:center; margin-bottom:32px;
+}
+.login-mark .lm-title {
+  font-size:18px; font-weight:700; letter-spacing:0.05em;
+  color:var(--fg); margin-bottom:6px;
+}
+.login-mark .lm-sub {
+  font-size:11px; color:var(--fg-muted); letter-spacing:0.2em;
+  text-transform:uppercase;
+}
+.login-form { display:flex; flex-direction:column; gap:16px; }
+.login-form label {
+  font-size:11px; color:var(--fg-soft); letter-spacing:0.05em;
+  font-weight:600;
+}
+.login-form input {
+  width:100%; padding:11px 14px;
+  border:1px solid var(--border-strong);
+  border-radius:5px; font-size:14px;
+  font-family:var(--serif);
+  transition:border-color 0.2s, box-shadow 0.2s;
+}
+.login-form input:focus {
+  outline:none; border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(37,99,235,0.12);
+}
+.login-btn {
+  margin-top:8px; padding:12px;
+  background:var(--accent); color:#fff;
+  border:none; border-radius:5px;
+  font-size:14px; font-weight:600; letter-spacing:0.05em;
+  cursor:pointer;
+  transition:background 0.2s;
+}
+.login-btn:hover { background:var(--accent-hover); }
+.login-err {
+  color:var(--danger); font-size:12px; text-align:center;
+  min-height:18px;
+}
+.login-hint {
+  margin-top:24px; padding-top:20px;
+  border-top:1px solid var(--border);
+  font-size:11px; color:var(--fg-muted);
+  text-align:center; letter-spacing:0.05em;
+}
+.login-hint code {
+  background:var(--bg); padding:1px 6px; border-radius:3px;
+  font-family:var(--mono); font-size:11px;
+}
+
+/* ========== Dashboard ========== */
+.app {
+  display:grid;
+  grid-template-columns:240px 1fr;
+  min-height:100vh;
+}
+.sidebar {
+  background:#1a1d24; color:#cdd0d8;
+  padding:24px 0;
+  display:flex; flex-direction:column;
+}
+.sb-mark {
+  padding:0 24px 24px;
+  border-bottom:1px solid #2d3140;
+}
+.sb-mark .sm-title {
+  font-size:14px; font-weight:700; color:#fff;
+  letter-spacing:0.05em;
+}
+.sb-mark .sm-sub {
+  font-size:10px; color:#6b7080; letter-spacing:0.2em;
+  text-transform:uppercase; margin-top:4px;
+}
+.sb-nav {
+  padding:20px 0; flex:1;
+}
+.sb-item {
+  display:flex; align-items:center; gap:10px;
+  padding:10px 24px; color:#cdd0d8;
+  text-decoration:none; font-size:13px;
+  cursor:pointer; border-left:2px solid transparent;
+  transition:all 0.2s;
+}
+.sb-item:hover { background:#2d3140; color:#fff; }
+.sb-item.active { background:#2d3140; color:#fff; border-left-color:var(--accent); }
+.sb-foot {
+  padding:16px 24px;
+  border-top:1px solid #2d3140;
+  font-size:11px; color:#6b7080;
+}
+.sb-logout {
+  background:none; border:none; color:#cdd0d8;
+  font-size:12px; cursor:pointer; padding:6px 0;
+  width:100%; text-align:left; margin-top:4px;
+}
+.sb-logout:hover { color:#fff; }
+
+.main {
+  background:var(--bg);
+  padding:32px 40px;
+  overflow-y:auto;
+}
+.main-head {
+  display:flex; justify-content:space-between; align-items:center;
+  margin-bottom:32px;
+}
+.main-title {
+  font-size:20px; font-weight:700; color:var(--fg);
+}
+.main-meta {
+  display:flex; gap:16px; align-items:center;
+  font-size:12px; color:var(--fg-soft);
+}
+.main-meta .stat {
+  background:var(--panel); padding:6px 12px;
+  border-radius:4px; border:1px solid var(--border);
+}
+.main-meta .stat strong { color:var(--accent); font-weight:700; }
+
+/* 工具栏 */
+.toolbar {
+  display:flex; gap:12px; margin-bottom:20px;
+}
+.btn {
+  padding:9px 16px; border-radius:5px; font-size:13px;
+  font-weight:500; cursor:pointer;
+  border:1px solid var(--border-strong);
+  background:var(--panel); color:var(--fg);
+  transition:all 0.2s;
+  display:inline-flex; align-items:center; gap:6px;
+}
+.btn:hover { border-color:var(--accent); color:var(--accent); }
+.btn-primary {
+  background:var(--accent); color:#fff; border-color:var(--accent);
+}
+.btn-primary:hover { background:var(--accent-hover); color:#fff; }
+.btn-danger { color:var(--danger); }
+.btn-danger:hover { color:#fff; background:var(--danger); border-color:var(--danger); }
+
+/* 列表 */
+.list {
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:6px;
+  overflow:hidden;
+}
+.list-head, .list-row {
+  display:grid;
+  grid-template-columns:60px 80px 1fr 160px 200px 140px;
+  gap:16px; padding:14px 20px;
+  align-items:center;
+  font-size:13px;
+}
+.list-head {
+  background:#fafbfc; border-bottom:1px solid var(--border);
+  font-weight:600; color:var(--fg-soft);
+  font-size:11px; letter-spacing:0.1em; text-transform:uppercase;
+}
+.list-row {
+  border-bottom:1px solid var(--border);
+  transition:background 0.15s;
+}
+.list-row:last-child { border-bottom:none; }
+.list-row:hover { background:#fafbfc; }
+.list-row .li-thumb {
+  width:48px; height:48px; border-radius:4px;
+  background:#f0f1f4;
+  display:flex; align-items:center; justify-content:center;
+  font-size:10px; color:var(--fg-muted);
+  overflow:hidden;
+}
+.list-row .li-thumb img { width:100%; height:100%; object-fit:cover; }
+.list-row .li-id {
+  font-family:var(--mono); font-size:12px; color:var(--fg-muted);
+}
+.list-row .li-title {
+  font-weight:600; color:var(--fg);
+}
+.list-row .li-kind {
+  font-family:var(--mono); font-size:11px; color:var(--accent);
+  letter-spacing:0.1em;
+}
+.list-row .li-date {
+  font-size:12px; color:var(--fg-soft);
+}
+.list-row .li-actions {
+  display:flex; gap:6px;
+}
+.icon-btn {
+  width:28px; height:28px; border:1px solid var(--border);
+  background:var(--bg); border-radius:4px;
+  cursor:pointer; display:flex; align-items:center; justify-content:center;
+  font-size:13px; color:var(--fg-soft);
+  transition:all 0.15s;
+}
+.icon-btn:hover { border-color:var(--accent); color:var(--accent); }
+.icon-btn.del:hover { border-color:var(--danger); color:var(--danger); }
+
+.empty {
+  padding:80px 20px; text-align:center; color:var(--fg-muted);
+  font-size:13px;
+}
+
+/* ========== 编辑 Modal ========== */
+.modal {
+  position:fixed; inset:0; z-index:1000;
+  background:rgba(26,29,36,0.6);
+  display:none; align-items:flex-start; justify-content:center;
+  padding:60px 20px; overflow-y:auto;
+}
+.modal.open { display:flex; }
+.modal-card {
+  width:100%; max-width:680px;
+  background:var(--panel); border-radius:8px;
+  box-shadow:0 20px 60px rgba(0,0,0,0.3);
+  overflow:hidden;
+}
+.modal-head {
+  padding:20px 28px; border-bottom:1px solid var(--border);
+  display:flex; justify-content:space-between; align-items:center;
+  background:#fafbfc;
+}
+.modal-head .mh-title {
+  font-size:15px; font-weight:700;
+}
+.modal-head .mh-close {
+  background:none; border:none; cursor:pointer;
+  font-size:20px; color:var(--fg-muted);
+  width:28px; height:28px; border-radius:4px;
+}
+.modal-head .mh-close:hover { background:#f0f1f4; color:var(--fg); }
+.modal-body { padding:24px 28px; }
+.modal-foot {
+  padding:16px 28px; border-top:1px solid var(--border);
+  display:flex; justify-content:flex-end; gap:8px;
+  background:#fafbfc;
+}
+
+/* 表单 */
+.form-grid {
+  display:grid; grid-template-columns:1fr 1fr; gap:16px;
+}
+.form-row { display:flex; flex-direction:column; gap:6px; }
+.form-row.full { grid-column:1 / -1; }
+.form-row label {
+  font-size:11px; color:var(--fg-soft); font-weight:600;
+  letter-spacing:0.05em;
+}
+.form-row input, .form-row select, .form-row textarea {
+  padding:9px 12px; border:1px solid var(--border-strong);
+  border-radius:4px; font-size:13px;
+  font-family:var(--serif);
+  background:#fff;
+  transition:border-color 0.2s, box-shadow 0.2s;
+}
+.form-row input:focus, .form-row select:focus, .form-row textarea:focus {
+  outline:none; border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(37,99,235,0.10);
+}
+.form-row textarea { min-height:160px; resize:vertical; font-family:var(--mono); font-size:12px; line-height:1.7; }
+.form-row .hint { font-size:11px; color:var(--fg-muted); }
+
+/* 图片上传 */
+.img-uploader {
+  width:100%; min-height:140px;
+  border:2px dashed var(--border-strong);
+  border-radius:5px;
+  display:flex; align-items:center; justify-content:center;
+  flex-direction:column; gap:8px;
+  cursor:pointer; background:#fafbfc;
+  font-size:12px; color:var(--fg-muted);
+  transition:all 0.2s;
+  position:relative; overflow:hidden;
+}
+.img-uploader:hover { border-color:var(--accent); background:#f0f5ff; }
+.img-uploader.has-image {
+  border-style:solid; border-color:var(--border);
+  background:#000;
+}
+.img-uploader img {
+  position:absolute; inset:0; width:100%; height:100%;
+  object-fit:contain; background:#000;
+}
+.img-uploader .iu-actions {
+  position:absolute; bottom:8px; right:8px;
+  display:flex; gap:6px; z-index:2;
+}
+.img-uploader .iu-actions button {
+  background:rgba(0,0,0,0.7); color:#fff; border:none;
+  padding:5px 10px; font-size:11px; border-radius:3px;
+  cursor:pointer;
+}
+
+@media (max-width:900px) {
+  .app { grid-template-columns:1fr; }
+  .sidebar { display:none; }
+  .form-grid { grid-template-columns:1fr; }
+  .list-head, .list-row { grid-template-columns:48px 60px 1fr 100px; gap:10px; font-size:12px; }
+  .list-head .col-kind, .list-head .col-date,
+  .list-row .li-kind, .list-row .li-date { display:none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ========== 登录页 ========== -->
+<div class="login-wrap" id="loginWrap">
+  <div class="login-card">
+    <div class="login-mark">
+      <div class="lm-title">Aing CMS</div>
+      <div class="lm-sub">CONTENT MANAGEMENT</div>
+    </div>
+    <form class="login-form" id="loginForm">
+      <div>
+        <label>账号 · USERNAME</label>
+        <input type="text" id="loginUser" autocomplete="username" required>
+      </div>
+      <div>
+        <label>密码 · PASSWORD</label>
+        <input type="password" id="loginPass" autocomplete="current-password" required>
+      </div>
+      <div class="login-err" id="loginErr"></div>
+      <button type="submit" class="login-btn">登 录 · SIGN IN</button>
+    </form>
+    <div class="login-hint">
+      默认账号 <code>admin</code> · 密码 <code>aing2026</code><br>
+      <span style="color:var(--fg-muted);font-size:10px;">本版本为本地演示，密码校验在前端进行</span>
+    </div>
+  </div>
+</div>
+
+<!-- ========== Dashboard ========== -->
+<div class="app" id="appWrap" style="display:none;">
+  <aside class="sidebar">
+    <div class="sb-mark">
+      <div class="sm-title">Aing CMS</div>
+      <div class="sm-sub">v0.1 · LOCAL</div>
+    </div>
+    <nav class="sb-nav">
+      <a class="sb-item active" data-tab="prompts">
+        <span>📋</span> 提示词库
+      </a>
+      <a class="sb-item" data-tab="works">
+        <span>🪶</span> 作品库
+      </a>
+      <a class="sb-item" data-tab="settings">
+        <span>⚙️</span> 数据管理
+      </a>
+    </nav>
+    <div class="sb-foot">
+      <div>登录身份 · ADMIN</div>
+      <div id="sbUser" style="color:#fff;margin-top:4px;">admin</div>
+      <button class="sb-logout" id="logoutBtn">← 退出登录</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <!-- 头部 -->
+    <div class="main-head">
+      <div class="main-title" id="pageTitle">提示词库</div>
+      <div class="main-meta">
+        <span class="stat">共 <strong id="statCount">0</strong> 条</span>
+        <span class="stat">数据源 · <strong id="statSource">localStorage</strong></span>
+        <a class="btn" href="index.html" target="_blank">↗ 看前台</a>
+      </div>
+    </div>
+
+    <!-- 工具栏 -->
+    <div class="toolbar">
+      <button class="btn btn-primary" id="addBtn">+ 新增</button>
+      <button class="btn" id="seedBtn">↺ 恢复 6 张默认</button>
+      <button class="btn" id="exportBtn">↓ 导出 JSON</button>
+      <button class="btn" id="importBtn">↑ 导入 JSON</button>
+      <input type="file" id="importFile" accept=".json" style="display:none;">
+    </div>
+
+    <!-- 列表 -->
+    <div class="list">
+      <div class="list-head">
+        <div>缩略</div>
+        <div>编号</div>
+        <div>名称</div>
+        <div class="col-kind">类型</div>
+        <div class="col-date">更新时间</div>
+        <div>操作</div>
+      </div>
+      <div id="listBody"></div>
+    </div>
+  </main>
+</div>
+
+<!-- ========== 编辑 Modal ========== -->
+<div class="modal" id="modal">
+  <div class="modal-card">
+    <div class="modal-head">
+      <div class="mh-title" id="modalTitle">新增 · NEW</div>
+      <button class="mh-close" id="modalClose">×</button>
+    </div>
+    <form id="editForm" class="modal-body">
+      <input type="hidden" id="f-id">
+      <div class="form-grid">
+        <div class="form-row full">
+          <label>缩略图 · IMAGE</label>
+          <div class="img-uploader" id="imgUploader">
+            <span class="iu-text">📁 点击上传图片 · 或拖拽到此处</span>
+            <input type="file" id="f-image" accept="image/*" style="display:none;">
+          </div>
+        </div>
+        <div class="form-row">
+          <label>名称 · TITLE</label>
+          <input type="text" id="f-title" required placeholder="例：职业头像 · 华尔街美式">
+        </div>
+        <div class="form-row">
+          <label>类型 · KIND</label>
+          <select id="f-kind">
+            <option value="HEADSHOT">HEADSHOT · 图像生成</option>
+            <option value="ROLE">ROLE · 角色设定</option>
+            <option value="CHAIN-OF-THOUGHT">CHAIN-OF-THOUGHT · 推理</option>
+            <option value="REWRITE">REWRITE · 改写</option>
+            <option value="STRUCTURED">STRUCTURED · 结构化</option>
+            <option value="SUMMARIZE">SUMMARIZE · 长文</option>
+            <option value="TOOLS">TOOLS · 工具</option>
+            <option value="WRITING">WRITING · 写作</option>
+            <option value="WEB">WEB · 网页</option>
+          </select>
+        </div>
+        <div class="form-row full">
+          <label>标签 · TAGS <span style="font-weight:400;color:var(--fg-muted);">(逗号分隔)</span></label>
+          <input type="text" id="f-tags" placeholder="例：Photography, Executive">
+        </div>
+        <div class="form-row full">
+          <label>简介 · PREVIEW</label>
+          <input type="text" id="f-preview" placeholder="1-2 句简介 · 在卡片和网格中显示">
+        </div>
+        <div class="form-row full">
+          <label>完整内容 · BODY <span style="font-weight:400;color:var(--fg-muted);">(等宽字体 · 在弹层中显示)</span></label>
+          <textarea id="f-body" required placeholder="完整的 prompt 文本..."></textarea>
+        </div>
+      </div>
+    </form>
+    <div class="modal-foot">
+      <button class="btn" id="modalCancel">取消</button>
+      <button class="btn btn-primary" id="modalSave">保存 · SAVE</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ========== 配置 ========== */
+const ADMIN_USER = "admin";
+const ADMIN_PASS = "aing2026";
+const DB_KEY = "aing_cms_db_v1";
+const SESSION_KEY = "aing_cms_session";
+
+/* ========== 数据层 ========== */
+function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+function now() {
+  return new Date().toISOString();
+}
+function loadDB() {
+  try {
+    const raw = localStorage.getItem(DB_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) { console.warn("DB 读取失败", e); }
+  return { prompts: [] };
+}
+function saveDB(db) {
+  localStorage.setItem(DB_KEY, JSON.stringify(db));
+}
+
+/* 默认 6 张占位数据 · 跟 prompts.html 现有的一致 */
+const DEFAULT_PROMPTS = [
+  { title: "职业头像 · 华尔街美式", kind: "HEADSHOT", tags: ["Photography","Executive"],
+    image: "assets/headshot-wsj.jpg",
+    preview: "Corporate executive headshot, Asian entrepreneur, professional business portrait, navy suit, white dress shirt, confident natural smile, looking at camera, dark gray gradient background……",
+    body: `Corporate executive headshot, Asian entrepreneur, professional business portrait, navy suit, white dress shirt, confident natural smile, looking at camera, dark gray gradient background, luxury studio lighting, high-end corporate branding style, executive portrait photography, LinkedIn premium headshot, Fortune 500 executive profile, photorealistic, ultra detailed skin texture, sharp eyes, 85mm lens, shallow depth of field, magazine quality, professional retouching, symmetrical composition` },
+  { title: "角色设定 · 通用专家", kind: "ROLE", tags: ["System","Consulting"],
+    image: null,
+    preview: "让 AI 扮演一位资深 XX 专家，先理解你的问题背景，再分点给出可执行的建议……",
+    body: `你是一位资深的「{领域}」专家。请按以下步骤回答我的问题：\n\n1. 先用 2-3 句话理解我的问题背景（如果不清楚，主动追问）\n2. 给出 3 条核心建议，每条不超过 2 句话\n3. 最后列 1-2 个"我可能没想到、但你可能需要知道"的细节\n\n约束：\n- 不要给"百科全书"式的回答\n- 不要回避不确定性\n- 全程用中文\n\n现在请听我的问题：` },
+  { title: "思路链 · CoT", kind: "CHAIN-OF-THOUGHT", tags: ["Reasoning","Logic"],
+    image: null,
+    preview: "强制 AI 一步步想，先列步骤再给结论。适用于：复杂问题 / 数学 / 逻辑题……",
+    body: `在给出最终答案之前，请先按下面的格式"一步一步想"：\n\n【我的理解】\n（用 1-2 句话复述题目）\n\n【拆分步骤】\n1. 第一步……\n2. ……\n\n【最终答案】\n（在以上推理之后给出）\n\n题目：` },
+  { title: "提示词润色 · 重写", kind: "REWRITE", tags: ["Editing","Style"],
+    image: null,
+    preview: "把一段写得平淡的文字改得更有节奏、更有画面感。可以指定语气……",
+    body: `请把下面这段文字改写得更生动。请先告诉我你会选哪种语气（克制 / 锐利 / 温暖 / 学术），然后再改写。\n\n原文字：\n---\n{在这里粘贴}\n---\n\n约束：\n- 保留原意，不要加新观点\n- 长度不要超过原文的 1.5 倍` },
+  { title: "信息抽取 · JSON", kind: "STRUCTURED", tags: ["Extraction","Data"],
+    image: null,
+    preview: "从一段非结构化文字里抽出指定字段，按 JSON 输出。适用于：合同解析 / 简历筛选……",
+    body: `请从下面这段文字里，按指定 schema 抽取信息，按 JSON 输出。\n\n【待抽取的文字】\n---\n{在这里粘贴}\n---\n\n【输出 schema】\n{\n  "people": [],\n  "organizations": [],\n  "dates": [],\n  "key_points": []\n}` },
+  { title: "长文摘要 · 滚动", kind: "SUMMARIZE", tags: ["Long-form","Summary"],
+    image: null,
+    preview: "超长上下文（> 50k 字）分段总结，最后给出一份「可以贴进任何地方」的压缩版……",
+    body: `请把下面这篇长文摘要为 3 个层次的输出：\n\n【第一层 · 一句话】（不超过 30 字）\n【第二层 · 5 个 bullet】（每条不超过 1 句话）\n【第三层 · 一段话】（不超过 200 字）\n\n如果原文超过 5000 字，请先告诉我"我打算怎么切分它"。\n\n【原文】\n---\n{在这里粘贴长文}\n---` }
+];
+
+/* ========== 状态 ========== */
+let db = loadDB();
+let currentTab = "prompts";
+
+/* ========== 登录 ========== */
+document.getElementById("loginForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const u = document.getElementById("loginUser").value.trim();
+  const p = document.getElementById("loginPass").value;
+  if (u === ADMIN_USER && p === ADMIN_PASS) {
+    sessionStorage.setItem(SESSION_KEY, "1");
+    showApp();
+  } else {
+    document.getElementById("loginErr").textContent = "账号或密码不正确";
+  }
+});
+
+document.getElementById("logoutBtn").addEventListener("click", () => {
+  sessionStorage.removeItem(SESSION_KEY);
+  location.reload();
+});
+
+function showApp() {
+  document.getElementById("loginWrap").style.display = "none";
+  document.getElementById("appWrap").style.display = "grid";
+  document.getElementById("sbUser").textContent = ADMIN_USER;
+  renderList();
+}
+
+/* ========== 标签切换 ========== */
+document.querySelectorAll(".sb-item").forEach(it => {
+  it.addEventListener("click", (e) => {
+    e.preventDefault();
+    document.querySelectorAll(".sb-item").forEach(x => x.classList.remove("active"));
+    it.classList.add("active");
+    currentTab = it.dataset.tab;
+    document.getElementById("pageTitle").textContent =
+      currentTab === "prompts" ? "提示词库" :
+      currentTab === "works" ? "作品库" : "数据管理";
+    renderList();
+  });
+});
+
+/* ========== 渲染列表 ========== */
+function renderList() {
+  const body = document.getElementById("listBody");
+  document.getElementById("statCount").textContent = db.prompts.length;
+
+  if (currentTab === "settings") {
+    body.innerHTML = `
+      <div style="padding:40px;">
+        <h3 style="margin-bottom:20px;">数据管理</h3>
+        <p style="color:var(--fg-soft);line-height:1.9;margin-bottom:24px;">
+          当前数据存储在浏览器 <code>localStorage</code> 中，<strong>仅在本机可见</strong>。
+          换浏览器 / 换电脑会看不到这些数据。
+        </p>
+        <p style="margin-bottom:12px;">数据位置：<code style="background:#f0f1f4;padding:2px 8px;border-radius:3px;font-size:12px;">localStorage["aing_cms_db_v1"]</code></p>
+        <p style="margin-bottom:32px;">当前条目数：<strong>${db.prompts.length}</strong> 条 · 占用空间约 <strong>${(JSON.stringify(db).length / 1024).toFixed(1)} KB</strong></p>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+          <button class="btn btn-primary" onclick="exportJSON()">↓ 导出全部数据为 JSON</button>
+          <button class="btn" onclick="document.getElementById('importFile').click()">↑ 导入 JSON</button>
+          <button class="btn btn-danger" onclick="clearAll()">清空所有数据</button>
+        </div>
+        <div style="margin-top:48px;padding:20px;background:#fff8e6;border:1px solid #f0d790;border-radius:6px;font-size:12px;color:#5a4a20;">
+          <strong>提示：</strong>localStorage 单域名最多 5MB · 图片以 base64 存储比较占空间 · 大量图片建议升级到 Node.js + 文件存储
+        </div>
+      </div>`;
+    return;
+  }
+
+  if (db.prompts.length === 0) {
+    body.innerHTML = `<div class="empty">暂无数据 · 点 "恢复 6 张默认" 加载占位数据 · 或 "新增" 你的第一条</div>`;
+    return;
+  }
+
+  body.innerHTML = db.prompts.map(p => `
+    <div class="list-row" data-id="${p.id}">
+      <div class="li-thumb">${p.image ? `<img src="${p.image}" alt="">` : "无图"}</div>
+      <div class="li-id">${(p.id || "").slice(-6).toUpperCase()}</div>
+      <div class="li-title">${escapeHTML(p.title || "")}</div>
+      <div class="li-kind col-kind">${p.kind || ""}</div>
+      <div class="li-date col-date">${formatDate(p.updatedAt || p.createdAt)}</div>
+      <div class="li-actions">
+        <button class="icon-btn" title="编辑" onclick="openEdit('${p.id}')">✎</button>
+        <button class="icon-btn del" title="删除" onclick="delItem('${p.id}')">×</button>
+      </div>
+    </div>
+  `).join("");
+}
+
+function escapeHTML(s) { return String(s).replace(/[<>&"']/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;","'":"&#39;"}[c])); }
+function formatDate(iso) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  const pad = n => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/* ========== Modal ========== */
+const modal = document.getElementById("modal");
+let editingId = null;
+
+document.getElementById("addBtn").addEventListener("click", () => openEdit(null));
+document.getElementById("modalClose").addEventListener("click", closeModal);
+document.getElementById("modalCancel").addEventListener("click", closeModal);
+
+function openEdit(id) {
+  editingId = id;
+  const item = id ? db.prompts.find(x => x.id === id) : null;
+  document.getElementById("modalTitle").textContent = item ? "编辑 · EDIT" : "新增 · NEW";
+  document.getElementById("f-id").value = item ? item.id : "";
+  document.getElementById("f-title").value = item ? item.title || "" : "";
+  document.getElementById("f-kind").value = item ? (item.kind || "ROLE") : "ROLE";
+  document.getElementById("f-tags").value = item ? (item.tags || []).join(", ") : "";
+  document.getElementById("f-preview").value = item ? item.preview || "" : "";
+  document.getElementById("f-body").value = item ? item.body || "" : "";
+
+  const uploader = document.getElementById("imgUploader");
+  const img = item && item.image ? `<img src="${item.image}" alt="">` : "";
+  uploader.classList.toggle("has-image", !!img);
+  uploader.innerHTML = `
+    ${img}
+    ${img ? `<div class="iu-actions"><button type="button" onclick="event.stopPropagation();document.getElementById('f-image').click()">替换</button><button type="button" onclick="event.stopPropagation();clearImage()">清除</button></div>` : `<span class="iu-text">📁 点击上传图片 · 或拖拽到此处</span>`}
+    <input type="file" id="f-image" accept="image/*" style="display:none;">
+  `;
+  bindUploader();
+  modal.classList.add("open");
+}
+function closeModal() { modal.classList.remove("open"); editingId = null; }
+
+function clearImage() {
+  const u = document.getElementById("imgUploader");
+  u.classList.remove("has-image");
+  u.innerHTML = `<span class="iu-text">📁 点击上传图片 · 或拖拽到此处</span><input type="file" id="f-image" accept="image/*" style="display:none;">`;
+  bindUploader();
+}
+
+function bindUploader() {
+  const u = document.getElementById("imgUploader");
+  const file = document.getElementById("f-image");
+  u.onclick = () => file.click();
+  file.onchange = (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    if (f.size > 4 * 1024 * 1024) { alert("图片不能超过 4MB"); return; }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      u.classList.add("has-image");
+      u.innerHTML = `<img src="${ev.target.result}" alt=""><div class="iu-actions"><button type="button" onclick="event.stopPropagation();document.getElementById('f-image').click()">替换</button><button type="button" onclick="event.stopPropagation();clearImage()">清除</button></div><input type="file" id="f-image" accept="image/*" style="display:none;">`;
+      bindUploader();
+    };
+    reader.readAsDataURL(f);
+  };
+}
+
+document.getElementById("modalSave").addEventListener("click", () => {
+  const title = document.getElementById("f-title").value.trim();
+  if (!title) { alert("请填写名称"); return; }
+  const kind = document.getElementById("f-kind").value;
+  const tagsRaw = document.getElementById("f-tags").value.trim();
+  const tags = tagsRaw ? tagsRaw.split(/[,，]/).map(s => s.trim()).filter(Boolean) : [];
+  const preview = document.getElementById("f-preview").value.trim();
+  const body = document.getElementById("f-body").value.trim();
+  if (!body) { alert("请填写完整内容"); return; }
+
+  const uploader = document.getElementById("imgUploader");
+  const imgEl = uploader.querySelector("img");
+  const image = imgEl ? imgEl.src : null;
+
+  const id = editingId || uid();
+  const item = db.prompts.find(x => x.id === id) || {};
+  Object.assign(item, { id, title, kind, tags, image, preview, body, updatedAt: now(), createdAt: item.createdAt || now() });
+
+  if (!editingId) db.prompts.unshift(item);
+  saveDB(db);
+  closeModal();
+  renderList();
+});
+
+/* ========== 删除 ========== */
+window.delItem = function (id) {
+  if (!confirm("确定删除？")) return;
+  db.prompts = db.prompts.filter(x => x.id !== id);
+  saveDB(db);
+  renderList();
+};
+
+/* ========== 默认数据 ========== */
+document.getElementById("seedBtn").addEventListener("click", () => {
+  if (db.prompts.length > 0) {
+    if (!confirm("已有数据 · 恢复默认会覆盖现有内容 · 继续？")) return;
+  }
+  db.prompts = DEFAULT_PROMPTS.map(p => ({
+    id: uid(),
+    ...p,
+    createdAt: now(),
+    updatedAt: now()
+  }));
+  saveDB(db);
+  renderList();
+  alert("已恢复 6 张默认数据");
+});
+
+/* ========== 导入/导出 ========== */
+window.exportJSON = function () {
+  const blob = new Blob([JSON.stringify(db, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `aing_cms_${Date.now()}.json`;
+  a.click();
+};
+document.getElementById("exportBtn").addEventListener("click", window.exportJSON);
+
+document.getElementById("importBtn").addEventListener("click", () => document.getElementById("importFile").click());
+document.getElementById("importFile").addEventListener("change", (e) => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = (ev) => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (data.prompts && Array.isArray(data.prompts)) {
+        if (confirm("导入会覆盖现有数据 · 继续？")) {
+          db = data;
+          saveDB(db);
+          renderList();
+          alert("导入成功");
+        }
+      } else { alert("JSON 格式不对"); }
+    } catch (e) { alert("JSON 解析失败：" + e.message); }
+  };
+  r.readAsText(f);
+});
+
+window.clearAll = function () {
+  if (!confirm("清空所有数据？")) return;
+  if (!confirm("真的？清空后不能恢复（除非你之前导出过）")) return;
+  db = { prompts: [] };
+  saveDB(db);
+  renderList();
+};
+
+/* ========== 全局引用 ========== */
+window.openEdit = openEdit;
+
+/* ========== 启动 ========== */
+if (sessionStorage.getItem(SESSION_KEY) === "1") showApp();
+</script>
+</body>
+</html>

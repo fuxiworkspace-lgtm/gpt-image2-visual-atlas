@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { createRoot } from 'react-dom/client';
+import { createPortal, createRoot } from 'react-dom/client';
 import {
+  ArrowLeft,
   ArrowUpRight,
   BarChart3,
   Bot,
@@ -11,12 +12,16 @@ import {
   CreditCard,
   Crown,
   Eye,
+  FileImage,
   Github,
   Heart,
+  History,
   ImageIcon,
   LoaderCircle,
   LogIn,
   LogOut,
+  Monitor,
+  Moon,
   PackageCheck,
   RefreshCw,
   ReceiptText,
@@ -24,8 +29,11 @@ import {
   Settings,
   ShieldCheck,
   Sparkles,
+  Sun,
   Terminal,
+  Trash2,
   TrendingUp,
+  Upload,
   UserCircle,
   UserPlus,
   Users,
@@ -34,12 +42,13 @@ import {
 } from 'lucide-react';
 import './styles.css';
 import { isSupabaseConfigured, supabase } from './supabaseClient';
-import wechatCommunityImage from './assets/wechat-community.jpg';
+import wechatCommunityImage from './assets/wechat-community.png';
 import skillExampleImage from '../agents/skills/gpt-image-2-style-library/assets/city-life-system-map.png';
 
 const fallbackRepoUrl = 'https://github.com/fuxiworkspace-lgtm/gpt-image2-visual-atlas';
 const sponsorUrl = 'https://apimart.ai/register?aff=oQgzUQ';
-const membershipUrl = 'https://canghe.ai/membership/';
+// The personal site is shipped as an independent static sub-site of this domain.
+const personalCommunityUrl = '/personal/';
 const gaMeasurementId = import.meta.env.VITE_GA_MEASUREMENT_ID;
 const watchaLogoUrl =
   'https://watcha.tos-cn-beijing.volces.com/products/logo/1752064513_guan-cha-insights.png?x-tos-process=image/resize,w_720/format,webp';
@@ -51,10 +60,11 @@ const copy = {
     navCases: 'Cases',
     navSkill: 'Skill',
     navTemplates: 'Templates',
+    navReversePrompt: 'Reverse Prompt',
     navCommunity: 'Community',
     navSponsor: 'API',
-    navMembership: 'Membership',
-    communityQrAlt: 'WeChat community invite card for GPT-Image2',
+    navPersonalCommunity: 'Personal Community',
+    communityQrAlt: 'Agent Fangyu Aing WeChat community card for Visual Atlas',
     eyebrow: 'A living archive of image intelligence',
     title: 'Visual Atlas.',
     subtitle:
@@ -84,11 +94,77 @@ const copy = {
     skillCopyCommand: 'Copy command',
     skillOpenDocs: 'Open skill source',
     skillNpm: 'View npm package',
+    skillGitHubSync: 'Synced from GitHub',
+    skillGitHubLoading: 'Syncing skill from GitHub...',
+    skillGitHubUnavailable: 'GitHub skill sync unavailable',
+    skillGitHubFallback: 'Using the skill bundled from this repository',
     skillCopied: 'Command copied',
     skillExampleAlt: 'City life system map generated with the GPT-Image2 style library skill',
     skillExampleCaption: 'Example output generated from the style-library skill.',
     skillStats: ['Claude Code ready', 'Codex ready', '20+ templates'],
+    reverseEyebrow: 'Reverse engineer the image',
+    reverseTitle: 'Reverse Prompt Studio',
+    reverseSubtitle: 'Turn a reference image into an editable visual brief, then keep the good prompts in your own archive.',
+    reverseUpload: 'Upload reference image',
+    reverseReplace: 'Replace image',
+    reverseRemove: 'Remove image',
+    reverseDropHint: 'PNG / JPG / WebP · up to 20MB',
+    reverseLanguage: 'Output language',
+    reverseDetail: 'Detail level',
+    reversePurpose: 'Use case',
+    reverseChinese: '中文',
+    reverseEnglish: 'English',
+    reverseBilingual: '中英双语',
+    reverseConcise: 'Concise',
+    reverseStandard: 'Standard',
+    reverseProfessional: 'Professional',
+    reverseGeneral: 'General image generation',
+    reverseAdvertising: 'Product advertising',
+    reversePortrait: 'Portrait photography',
+    reversePoster: 'Poster design',
+    reverseInfographic: 'Infographic',
+    reverseStart: 'Start reverse engineering',
+    reverseAnalyze: 'Analyzing visual structure',
+    reverseReading: 'Reading reference image',
+    reverseRecognizing: 'Recognizing subject and scene',
+    reverseComposing: 'Composing an executable prompt',
+    reverseSuccess: 'Prompt ready · saved to your Visual Atlas archive',
+    reverseFailed: 'Analysis failed. Try another image.',
+    reverseRetry: 'Try again',
+    reverseHistory: 'Recent reverse prompts',
+    reverseEmptyHistory: 'Your saved reverse prompts will appear here.',
+    reverseNoImage: 'Add an image to begin.',
+    reverseSummary: 'One-line summary',
+    reverseSubject: 'Subject & action',
+    reverseScene: 'Scene & environment',
+    reverseComposition: 'Composition & camera',
+    reverseLighting: 'Light & atmosphere',
+    reverseColor: 'Color & material',
+    reverseStyle: 'Art direction',
+    reverseTypography: 'Typography & layout',
+    reverseQuality: 'Quality & detail',
+    reverseNegative: 'Negative prompt',
+    reverseUncertainties: 'Uncertainties',
+    reverseFullPrompt: 'Editable full prompt',
+    reverseCopy: 'Copy prompt',
+    reverseCopied: 'Copied',
+    reverseIntoCreate: 'Copy for free creation',
+    reverseNew: 'New analysis',
+    reverseInspiration: 'Explore visual structures',
+    reverseInspirationSubtitle: 'Browse existing cases while you shape your next prompt.',
+    reverseSaved: 'Saved',
+    reverseUnsupported: 'Use PNG, JPG, JPEG, or WebP under 20MB.',
+    reverseAuthRequired: 'Sign in before analyzing and saving a reference image.',
+    reverseStoragePending: 'Analysis complete. Cloud history is unavailable until the storage migration is applied.',
+    reverseServiceUnavailable: 'The vision service is temporarily unavailable. Try again in a moment.',
+    reverseProviderBusy: 'The vision service is busy. Please try again shortly.',
+    reverseModelFailed: 'The vision model returned an incomplete result. Try again with another image.',
     search: 'Search cases, sources, prompts...',
+    clearSearch: 'Clear search',
+    theme: 'Theme',
+    themeSystem: 'Follow system',
+    themeLight: 'Light',
+    themeDark: 'Dark',
     category: 'Category',
     style: 'Style',
     scene: 'Scene',
@@ -123,6 +199,9 @@ const copy = {
     freeLimitReached: 'Free generation used. Buy credits or start a membership to keep generating.',
     creditsRequired: 'Credits required. Buy credits or start a membership to keep generating.',
     generationBusy: 'The image service is busy. Please try again in a moment.',
+    upstreamUnavailable: 'The image provider could not be reached. Your generation credit was released; please try again later.',
+    generationTimeout: 'The image service took too long to respond. Please try again.',
+    generationInProgress: 'The preview will appear here when the image is ready.',
     generationFailed: 'Generation failed. Please try again later.',
     promptRequired: 'Prompt is required and must stay under 6000 characters.',
     serverUnavailable: 'Generation service is not configured yet.',
@@ -146,6 +225,9 @@ const copy = {
     authError: 'Login failed. Please try again.',
     signOut: 'Sign out',
     account: 'Account',
+    favorites: 'Favorites',
+    close: 'Close',
+    done: 'Done',
     accountSettings: 'Account settings',
     accountTitle: 'Account settings',
     accountSubtitle: 'Manage your public display name, membership status, and GPT-Image2 credit usage.',
@@ -194,6 +276,60 @@ const copy = {
     creditsAvailable: (count) => `${count} credit${count === 1 ? '' : 's'} available`,
     adminTitle: 'User admin',
     adminSubtitle: 'Traffic, users, memberships, credits, and generation activity in one dashboard.',
+    adminOverview: 'Workspace overview',
+    adminUsersCredits: 'Users & credits',
+    contentManagement: 'Content library',
+    contentCases: 'Cases & Prompts',
+    contentTemplates: 'Prompt templates',
+    homepageControl: 'Homepage layout',
+    homepageTitle: 'Homepage hero',
+    homepageSubtitle: 'Set the hero image and choose the three case cards shown on the homepage.',
+    homepageBackground: 'Hero background image',
+    homepageBackgroundHint: 'Paste an image URL or upload a new image. Leave empty to use the current Visual Atlas image.',
+    homepageCaseCards: 'Featured case cards',
+    homepageCaseCard: (index) => `Card ${index}`,
+    homepageCaseId: 'Case ID',
+    homepageCaseHint: 'Enter an existing case ID. Leave blank to hide this card.',
+    homepagePreview: 'Homepage preview',
+    homepagePreviewEmpty: 'No case selected',
+    homepageSave: 'Save homepage layout',
+    homepageSaved: 'Homepage layout saved. The front page has updated.',
+    homepageLoadFailed: 'Homepage settings could not be loaded. Run the latest database migration first.',
+    homepageSaveFailed: 'Homepage settings could not be saved.',
+    imageProvider: 'Image provider',
+    imageProviderSubtitle: 'Choose the service used for image generation. API keys stay on the server.',
+    providerOpenAI: 'OpenAI GPT Image 2',
+    providerCiyuan: 'Ciyuan API (backup)',
+    providerSaved: 'Image provider updated.',
+    providerSaveFailed: 'Image provider could not be updated.',
+    newContent: 'New content',
+    editContent: 'Edit content',
+    saveContent: 'Save content',
+    deleteContent: 'Delete',
+    publishContent: 'Published',
+    draftContent: 'Draft',
+    caseTitle: 'Title',
+    caseImage: 'Image URL',
+    casePrompt: 'Prompt',
+    caseCategory: 'Category',
+    caseStyles: 'Styles (comma separated)',
+    caseScenes: 'Scenes (comma separated)',
+    caseSource: 'Source label',
+    caseSourceUrl: 'Source URL',
+    featuredContent: 'Featured',
+    uploadImage: 'Upload image',
+    uploadingImage: 'Uploading...',
+    contentSaved: 'Content saved.',
+    contentDeleted: 'Content deleted.',
+    contentLoadFailed: 'Content could not be loaded.',
+    contentRequired: 'Title, image, and prompt are required.',
+    templateId: 'Template ID',
+    templateTitleEn: 'English title',
+    templateTitleZh: 'Chinese title',
+    templateDescriptionEn: 'English description',
+    templateDescriptionZh: 'Chinese description',
+    templateTags: 'Tags (comma separated)',
+    templateCover: 'Cover URL',
     adminMetrics: 'Dashboard',
     trafficMetrics: 'Traffic',
     businessMetrics: 'Business',
@@ -247,6 +383,8 @@ const copy = {
     createdAt: 'Created',
     loadingUsers: 'Loading users...',
     noUsers: 'No users yet.',
+    adminLoading: 'Loading admin workspace...',
+    adminLoadFailed: 'Admin data could not be loaded. Refresh and try again.',
     adminOnly: 'Only super admins can view this page.',
     fullPrompt: 'Full Prompt',
     templatePrompt: 'Template Prompt',
@@ -264,10 +402,11 @@ const copy = {
     navCases: '案例',
     navSkill: '技能',
     navTemplates: '模板',
+    navReversePrompt: '反推提示词',
     navCommunity: '交流群',
     navSponsor: 'API',
-    navMembership: '会员',
-    communityQrAlt: 'GPT-Image2 微信交流群邀请卡',
+    navPersonalCommunity: '个人社区',
+    communityQrAlt: 'Agent 房语Aing 微信交流群卡片',
     eyebrow: '一座持续生长的视觉档案库',
     title: 'Visual Atlas\n视觉图鉴',
     subtitle:
@@ -297,11 +436,77 @@ const copy = {
     skillCopyCommand: '复制命令',
     skillOpenDocs: '打开 skill 源码',
     skillNpm: '查看 npm 包',
+    skillGitHubSync: '已从 GitHub 同步',
+    skillGitHubLoading: '正在从 GitHub 同步 skill…',
+    skillGitHubUnavailable: 'GitHub skill 同步不可用',
+    skillGitHubFallback: '当前使用仓库内同步的 skill',
     skillCopied: '命令已复制',
     skillExampleAlt: '使用 GPT-Image2 风格库 skill 生成的城市生命系统图谱',
     skillExampleCaption: '示例：用 gpt-image-2-style-library 生成“城市生命系统图谱”。',
     skillStats: ['Claude Code 可用', 'Codex 可用', '20+ 套模板'],
+    reverseEyebrow: '反推图像结构',
+    reverseTitle: '反推提示词工作台',
+    reverseSubtitle: '把参考图拆解成可编辑的视觉指令，并把真正有价值的 Prompt 留在你的图谱里。',
+    reverseUpload: '上传参考图',
+    reverseReplace: '替换图片',
+    reverseRemove: '移除图片',
+    reverseDropHint: 'PNG / JPG / WebP · 最大 20MB',
+    reverseLanguage: '输出语言',
+    reverseDetail: '详细程度',
+    reversePurpose: '生成用途',
+    reverseChinese: '中文',
+    reverseEnglish: 'English',
+    reverseBilingual: '中英双语',
+    reverseConcise: '简洁',
+    reverseStandard: '标准',
+    reverseProfessional: '专业',
+    reverseGeneral: '通用生图',
+    reverseAdvertising: '产品广告',
+    reversePortrait: '人像摄影',
+    reversePoster: '海报设计',
+    reverseInfographic: '信息图',
+    reverseStart: '开始反译',
+    reverseAnalyze: '正在分析视觉结构',
+    reverseReading: '正在读取参考图',
+    reverseRecognizing: '正在识别主体与场景',
+    reverseComposing: '正在编排可执行 Prompt',
+    reverseSuccess: '提示词已生成 · 已保存到你的视觉图谱',
+    reverseFailed: '分析失败，请更换图片后重试。',
+    reverseRetry: '重新分析',
+    reverseHistory: '最近反推',
+    reverseEmptyHistory: '你保存的反推结果会出现在这里。',
+    reverseNoImage: '添加图片后开始反推。',
+    reverseSummary: '一句话概括',
+    reverseSubject: '主体与动作',
+    reverseScene: '场景与环境',
+    reverseComposition: '构图与镜头',
+    reverseLighting: '光线与氛围',
+    reverseColor: '色彩与材质',
+    reverseStyle: '艺术风格',
+    reverseTypography: '文字与版式',
+    reverseQuality: '画质与细节',
+    reverseNegative: '负面提示词',
+    reverseUncertainties: '不确定信息',
+    reverseFullPrompt: '可编辑完整 Prompt',
+    reverseCopy: '复制 Prompt',
+    reverseCopied: '已复制',
+    reverseIntoCreate: '复制到自由创作',
+    reverseNew: '重新开始',
+    reverseInspiration: '继续浏览视觉结构',
+    reverseInspirationSubtitle: '一边观察真实案例，一边组织你的下一条 Prompt。',
+    reverseSaved: '已保存',
+    reverseUnsupported: '请使用 20MB 以内的 PNG、JPG、JPEG 或 WebP 图片。',
+    reverseAuthRequired: '请先登录，再进行反推并保存参考图。',
+    reverseStoragePending: '分析已完成，但云端历史暂不可用；请先执行反推模块的数据库迁移。',
+    reverseServiceUnavailable: '视觉分析服务暂时不可用，请稍后重试。',
+    reverseProviderBusy: '视觉分析服务当前繁忙，请稍后再试。',
+    reverseModelFailed: '视觉模型返回的结果不完整，请换一张图片重试。',
     search: '搜索案例、来源、Prompt...',
+    clearSearch: '清除搜索',
+    theme: '主题',
+    themeSystem: '跟随系统',
+    themeLight: '浅色',
+    themeDark: '深色',
     category: '分类',
     style: '风格',
     scene: '场景',
@@ -336,6 +541,9 @@ const copy = {
     freeLimitReached: '免费额度已用完，可购买积分包或开通会员继续生成。',
     creditsRequired: '积分不足，可购买积分包或开通会员继续生成。',
     generationBusy: '生图服务繁忙，请稍后再试。',
+    upstreamUnavailable: '生图服务暂时无法连接，刚才预扣的积分已释放，请稍后再试。',
+    generationTimeout: '生图服务响应超时，请稍后重新尝试。',
+    generationInProgress: '图片生成完成后会显示在这里。',
     generationFailed: '生成失败，请稍后再试。',
     promptRequired: 'Prompt 不能为空，并且不能超过 6000 字符。',
     serverUnavailable: '生成服务还没有完成配置。',
@@ -359,6 +567,9 @@ const copy = {
     authError: '登录失败，请稍后再试。',
     signOut: '退出登录',
     account: '账号',
+    favorites: '我的收藏',
+    close: '关闭',
+    done: '完成',
     accountSettings: '账户设置',
     accountTitle: '账户设置',
     accountSubtitle: '管理你的显示名称、会员状态和 GPT-Image2 积分消耗。',
@@ -407,6 +618,60 @@ const copy = {
     creditsAvailable: (count) => `可用积分 ${count}`,
     adminTitle: '用户管理',
     adminSubtitle: '统一查看流量、用户、会员、积分和生图活跃情况。',
+    adminOverview: '工作台概览',
+    adminUsersCredits: '用户与积分',
+    contentManagement: '内容库管理',
+    contentCases: '案例与 Prompt',
+    contentTemplates: '提示词模板',
+    homepageControl: '首页编排',
+    homepageTitle: '首页主视觉编排',
+    homepageSubtitle: '替换首页大背景图，并指定右下角展示的 3 个案例编号。',
+    homepageBackground: '首页大背景图',
+    homepageBackgroundHint: '可粘贴图片地址或直接上传；留空则继续使用当前 Visual Atlas 默认背景。',
+    homepageCaseCards: '右下角案例卡片',
+    homepageCaseCard: (index) => `卡片 ${index}`,
+    homepageCaseId: '案例编号',
+    homepageCaseHint: '填写已有的案例编号；留空则不显示该卡片。',
+    homepagePreview: '首页展示预览',
+    homepagePreviewEmpty: '尚未选择案例',
+    homepageSave: '保存首页编排',
+    homepageSaved: '首页编排已保存，前台首页已同步更新。',
+    homepageLoadFailed: '首页配置读取失败，请先执行最新的数据库迁移。',
+    homepageSaveFailed: '首页配置保存失败。',
+    imageProvider: '生图服务商',
+    imageProviderSubtitle: '选择生图服务。API Key 只保存在服务器环境变量中。',
+    providerOpenAI: 'OpenAI GPT Image 2',
+    providerCiyuan: '词元 API（备用）',
+    providerSaved: '生图服务商已更新。',
+    providerSaveFailed: '生图服务商更新失败。',
+    newContent: '新增内容',
+    editContent: '编辑内容',
+    saveContent: '保存内容',
+    deleteContent: '删除',
+    publishContent: '已发布',
+    draftContent: '草稿',
+    caseTitle: '标题',
+    caseImage: '图片地址',
+    casePrompt: 'Prompt',
+    caseCategory: '分类',
+    caseStyles: '风格（逗号分隔）',
+    caseScenes: '场景（逗号分隔）',
+    caseSource: '来源名称',
+    caseSourceUrl: '来源链接',
+    featuredContent: '精选',
+    uploadImage: '上传图片',
+    uploadingImage: '上传中...',
+    contentSaved: '内容已保存。',
+    contentDeleted: '内容已删除。',
+    contentLoadFailed: '内容加载失败。',
+    contentRequired: '标题、图片和 Prompt 为必填项。',
+    templateId: '模板 ID',
+    templateTitleEn: '英文标题',
+    templateTitleZh: '中文标题',
+    templateDescriptionEn: '英文说明',
+    templateDescriptionZh: '中文说明',
+    templateTags: '标签（逗号分隔）',
+    templateCover: '封面地址',
     adminMetrics: '数据看板',
     trafficMetrics: '流量数据',
     businessMetrics: '业务数据',
@@ -460,6 +725,8 @@ const copy = {
     createdAt: '创建时间',
     loadingUsers: '正在加载用户...',
     noUsers: '暂无用户。',
+    adminLoading: '正在加载管理后台…',
+    adminLoadFailed: '管理后台数据加载失败，请刷新后重试。',
     adminOnly: '仅超级管理员可查看。',
     fullPrompt: '完整 Prompt',
     templatePrompt: '模板 Prompt',
@@ -539,8 +806,68 @@ function compactText(value, maxLength = 180) {
 
 const GENERATED_TESTS_STORAGE_KEY = 'gpt-image-2-generated-tests:v1';
 const MAX_SAVED_GENERATIONS = 12;
-const HERO_CASE_COUNT = 5;
+const MAX_SAVED_GENERATION_IMAGE_CHARS = 1200000;
+const GENERATION_REQUEST_TIMEOUT_MS = 120000;
+const HERO_CASE_COUNT = 3;
 const HOT_STRIP_CASE_COUNT = 8;
+const DEFAULT_HOMEPAGE_SETTINGS = {
+  heroImageUrl: '',
+  heroCaseIds: []
+};
+const REVERSE_PROMPT_STORAGE_KEY = 'visual-atlas-reverse-prompts:v1';
+const MAX_REVERSE_IMAGE_BYTES = 20 * 1024 * 1024;
+
+function normalizeHomepageSettings(value) {
+  const ids = Array.isArray(value?.heroCaseIds) ? value.heroCaseIds : [];
+  return {
+    heroImageUrl: String(value?.heroImageUrl || '').trim(),
+    heroCaseIds: [...new Set(ids.map((id) => Number(id)).filter((id) => Number.isInteger(id) && id > 0))].slice(0, HERO_CASE_COUNT)
+  };
+}
+
+function readReversePromptHistory() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(REVERSE_PROMPT_STORAGE_KEY) || '[]');
+    return Array.isArray(stored) ? stored.slice(0, 12) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeReversePromptHistory(rows) {
+  try {
+    localStorage.setItem(REVERSE_PROMPT_STORAGE_KEY, JSON.stringify(rows.slice(0, 12)));
+  } catch {
+    // The UI remains usable when browser storage is unavailable or full.
+  }
+}
+
+function compressReverseImage(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('IMAGE_READ_FAILED'));
+    reader.onload = () => {
+      const image = new Image();
+      image.onerror = () => reject(new Error('IMAGE_READ_FAILED'));
+      image.onload = () => {
+        const maxSide = 1200;
+        const scale = Math.min(1, maxSide / Math.max(image.naturalWidth, image.naturalHeight));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+        canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+        const context = canvas.getContext('2d');
+        if (!context) return resolve(String(reader.result));
+        context.fillStyle = '#0b0d12';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', 0.82));
+      };
+      image.src = String(reader.result || '');
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 let bodyScrollLockCount = 0;
 let bodyScrollLockState = null;
 
@@ -671,7 +998,11 @@ function percentOf(value, max) {
 
 function readSavedGenerations() {
   try {
-    return JSON.parse(localStorage.getItem(GENERATED_TESTS_STORAGE_KEY) || '{}');
+    const stored = JSON.parse(localStorage.getItem(GENERATED_TESTS_STORAGE_KEY) || '{}');
+    if (!stored || typeof stored !== 'object' || Array.isArray(stored)) return {};
+    return Object.fromEntries(
+      Object.entries(stored).filter(([, value]) => String(value?.image || '').length <= MAX_SAVED_GENERATION_IMAGE_CHARS)
+    );
   } catch {
     return {};
   }
@@ -685,7 +1016,9 @@ function getSavedGeneration(caseId) {
 function saveGeneratedTest(caseId, entry) {
   const key = String(caseId);
   const saved = readSavedGenerations();
-  saved[key] = entry;
+  if (String(entry?.image || '').length <= MAX_SAVED_GENERATION_IMAGE_CHARS) {
+    saved[key] = entry;
+  }
 
   const latestEntries = Object.entries(saved)
     .filter(([, value]) => value?.image)
@@ -801,6 +1134,8 @@ function generationErrorMessage(error, language) {
   if (error === 'AUTH_REQUIRED') return t.authRequired;
   if (error === 'FORBIDDEN') return t.adminOnly;
   if (error === 'UPSTREAM_BUSY') return t.generationBusy;
+  if (error === 'UPSTREAM_UNAVAILABLE') return t.upstreamUnavailable;
+  if (error === 'GENERATION_TIMEOUT') return t.generationTimeout;
   if (error === 'SERVER_NOT_CONFIGURED') return t.serverUnavailable;
   if (error === 'BILLING_NOT_CONFIGURED') return t.checkoutUnavailable;
   if (error === 'CHECKOUT_FAILED' || error === 'BILLING_PORTAL_FAILED') return t.checkoutFailed;
@@ -810,6 +1145,16 @@ function generationErrorMessage(error, language) {
 
 function getAuthHeaders(session) {
   return session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {};
+}
+
+function reversePromptErrorMessage(error, language) {
+  const t = copy[language];
+  if (error === 'AUTH_REQUIRED') return t.reverseAuthRequired;
+  if (error === 'VISION_PROVIDER_BUSY') return t.reverseProviderBusy;
+  if (error === 'VISION_PROVIDER_UNAVAILABLE' || error === 'VISION_PROVIDER_TIMEOUT') return t.reverseServiceUnavailable;
+  if (error === 'INVALID_MODEL_RESULT') return t.reverseModelFailed;
+  if (error === 'REVERSE_HISTORY_UNAVAILABLE') return t.reverseStoragePending;
+  return t.reverseFailed;
 }
 
 function getGenerationQuotaText(profile, language) {
@@ -950,17 +1295,12 @@ function formatTemplatePrompt(item, language, styleLibrary) {
   ].join('\n');
 }
 
-function Hero({ latestCases, language, repoUrl, totalCases, categoryCount, onOpenCase }) {
+function Hero({ heroCases, heroImageUrl, language, repoUrl, totalCases, categoryCount, onOpenCase }) {
   const t = copy[language];
-  const atlasCardImages = [
-    '/images/visual-atlas/va-case-01.jpg',
-    '/images/visual-atlas/va-case-02.jpg',
-    '/images/visual-atlas/va-case-03.jpg'
-  ];
 
   return (
     <section className="hero">
-      <img className="heroAtlasImage" src="/images/visual-atlas/va-hero.png" alt="" aria-hidden="true" />
+      <img className="heroAtlasImage" src={heroImageUrl || '/images/visual-atlas/va-hero.png'} alt="" aria-hidden="true" />
       <div className="heroAtlasShade" />
       <div className="heroGlow heroGlowA" />
       <div className="heroGlow heroGlowB" />
@@ -999,7 +1339,7 @@ function Hero({ latestCases, language, repoUrl, totalCases, categoryCount, onOpe
         </div>
       </div>
       <div className="heroDeck" aria-label="Latest GPT-Image2 cases">
-        {latestCases.slice(0, 3).map((caseItem, index) => (
+        {heroCases.map((caseItem, index) => (
           <button
             className={`heroCard heroCard${index + 1}`}
             type="button"
@@ -1007,7 +1347,7 @@ function Hero({ latestCases, language, repoUrl, totalCases, categoryCount, onOpe
             onClick={() => onOpenCase(caseItem)}
             key={caseItem.id}
           >
-            <img src={atlasCardImages[index]} alt={caseItem.imageAlt} />
+            <img src={caseItem.image} alt={caseItem.imageAlt} />
             <span>{language === 'zh' ? '案例' : 'Case'} {caseItem.id}</span>
           </button>
         ))}
@@ -1099,6 +1439,59 @@ function LanguageSwitch({ language, setLanguage }) {
   );
 }
 
+function ThemeSwitch({ language, themeMode, setThemeMode }) {
+  const [open, setOpen] = useState(false);
+  const ref = useDropdownDismiss(open, setOpen);
+  const t = copy[language];
+  const themeOptions = [
+    { value: 'system', label: t.themeSystem, icon: Monitor },
+    { value: 'light', label: t.themeLight, icon: Sun },
+    { value: 'dark', label: t.themeDark, icon: Moon }
+  ];
+  const activeTheme = themeOptions.find((option) => option.value === themeMode) || themeOptions[0];
+  const ActiveIcon = activeTheme.icon;
+
+  return (
+    <div className="dropdownControl themeSwitch" ref={ref}>
+      <button
+        className={cx('dropdownTrigger', open && 'open')}
+        type="button"
+        aria-label={t.theme}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((current) => !current)}
+      >
+        <ActiveIcon size={15} />
+        <ChevronDown size={15} />
+      </button>
+      {open ? (
+        <div className="dropdownMenu themeMenu" role="menu">
+          {themeOptions.map((option) => {
+            const Icon = option.icon;
+            return (
+              <button
+                className={cx(option.value === themeMode && 'active')}
+                type="button"
+                role="menuitemradio"
+                aria-checked={option.value === themeMode}
+                onClick={() => {
+                  setThemeMode(option.value);
+                  setOpen(false);
+                }}
+                key={option.value}
+              >
+                <Icon size={15} />
+                <span>{option.label}</span>
+                {option.value === themeMode ? <Check size={15} /> : null}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function WeChatIcon({ size = 17 }) {
   return (
     <svg className="wechatNavIcon" width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -1139,6 +1532,89 @@ function CommunityNavItem({ language }) {
         <img src={wechatCommunityImage} alt={t.communityQrAlt} loading="lazy" />
       </span>
     </span>
+  );
+}
+
+function ArchiveCommunityItem({ language }) {
+  const t = copy[language];
+  const [open, setOpen] = useState(false);
+  const buttonRef = useRef(null);
+  const popoverRef = useRef(null);
+  const [position, setPosition] = useState({ left: 12, top: 12 });
+
+  useEffect(() => {
+    if (!open) return undefined;
+
+    const updatePosition = () => {
+      const rect = buttonRef.current?.getBoundingClientRect();
+      if (!rect) return;
+
+      const popupWidth = Math.min(430, Math.max(260, window.innerWidth - 24));
+      const popupHeight = Math.min(220, window.innerHeight - 24);
+      const left = Math.min(rect.right + 12, window.innerWidth - popupWidth - 12);
+      const top = Math.max(12, Math.min(rect.top, window.innerHeight - popupHeight - 12));
+
+      setPosition({
+        left: Math.max(12, left),
+        top
+      });
+    };
+
+    const handlePointerDown = (event) => {
+      if (!buttonRef.current?.contains(event.target) && !popoverRef.current?.contains(event.target)) {
+        setOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+
+    updatePosition();
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition, true);
+    document.addEventListener('pointerdown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+      document.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [open]);
+
+  const popover = open && typeof document !== 'undefined'
+    ? createPortal(
+        <span
+          ref={popoverRef}
+          className="archiveCommunityPopover"
+          role="dialog"
+          aria-label={t.navCommunity}
+          style={{ left: `${position.left}px`, top: `${position.top}px` }}
+        >
+          <img src={wechatCommunityImage} alt={t.communityQrAlt} loading="lazy" />
+        </span>,
+        document.body
+      )
+    : null;
+
+  return (
+    <>
+      <button
+        ref={buttonRef}
+        className={cx('archiveRailItem', 'archiveCommunityItem', open && 'active')}
+        type="button"
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        aria-label={t.navCommunity}
+        onClick={() => setOpen((current) => !current)}
+      >
+        <Users size={17} />
+        <span>{t.navCommunity}</span>
+      </button>
+      {popover}
+    </>
   );
 }
 
@@ -1799,7 +2275,35 @@ function AdminRankList({ rows, type, language }) {
   );
 }
 
-function AdminPanel({ open, language, session, casesById, onClose, onOpenCase }) {
+class AdminPanelBoundary extends React.Component {
+  state = { hasError: false };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  render() {
+    if (!this.state.hasError) return this.props.children;
+
+    const isZh = this.props.language === 'zh';
+    return (
+      <div className="previewOverlay adminOverlay" role="presentation">
+        <section className="adminDialog adminErrorDialog" role="alertdialog" aria-modal="true">
+          <div className="adminErrorState">
+            <ShieldCheck size={28} />
+            <h2>{isZh ? '管理后台暂时无法显示' : 'Admin workspace could not be displayed'}</h2>
+            <p>{isZh ? '后台界面遇到异常，请刷新页面后重新打开。' : 'The admin workspace hit an unexpected error. Refresh and open it again.'}</p>
+            <button type="button" onClick={this.props.onClose}>
+              {isZh ? '关闭后台' : 'Close admin'}
+            </button>
+          </div>
+        </section>
+      </div>
+    );
+  }
+}
+
+function AdminPanel({ open, language, session, casesById, homepageSettings, onHomepageSettingsSaved, onClose, onOpenCase }) {
   const t = copy[language];
   const [users, setUsers] = useState([]);
   const [metrics, setMetrics] = useState(null);
@@ -1810,6 +2314,7 @@ function AdminPanel({ open, language, session, casesById, onClose, onOpenCase })
   const [message, setMessage] = useState('');
   const [adjustment, setAdjustment] = useState(null);
   const [adjustStatus, setAdjustStatus] = useState('idle');
+  const [view, setView] = useState('overview');
   useBodyScrollLock(open);
 
   async function loadAdminData(nextRange = range, nextStart = customStart, nextEnd = customEnd) {
@@ -1847,7 +2352,7 @@ function AdminPanel({ open, language, session, casesById, onClose, onOpenCase })
       setStatus('error');
       setMessage(
         error.message === 'SERVER_NOT_CONFIGURED'
-          ? t.checkoutUnavailable
+          ? t.adminLoadFailed
           : error.message === 'INVALID_DATE_RANGE'
             ? t.invalidDateRange
             : generationErrorMessage(error.message, language)
@@ -1937,16 +2442,29 @@ function AdminPanel({ open, language, session, casesById, onClose, onOpenCase })
         <button className="previewClose" type="button" onClick={onClose} aria-label={t.closePreview}>
           <X size={20} />
         </button>
+        <div className="adminWorkspace">
+          <aside className="adminSidebar">
+            <div className="adminBrandMark"><ShieldCheck size={19} /><span>Visual Atlas<br /><small>Control room</small></span></div>
+            <nav className="adminNav" aria-label={t.adminTitle}>
+              <button className={cx(view === 'overview' && 'active')} type="button" onClick={() => setView('overview')}><BarChart3 size={17} />{t.businessMetrics}</button>
+              <button className={cx(view === 'users' && 'active')} type="button" onClick={() => setView('users')}><Users size={17} />{t.users} &amp; {t.credits}</button>
+              <button className={cx(view === 'content' && 'active')} type="button" onClick={() => setView('content')}><PackageCheck size={17} />{t.contentManagement}</button>
+              <button className={cx(view === 'homepage' && 'active')} type="button" onClick={() => setView('homepage')}><ImageIcon size={17} />{t.homepageControl}</button>
+              <button className={cx(view === 'provider' && 'active')} type="button" onClick={() => setView('provider')}><WandSparkles size={17} />{t.imageProvider}</button>
+            </nav>
+            <div className="adminSidebarFoot"><span>{t.superAdmin}</span><small>Protected workspace</small></div>
+          </aside>
+          <div className="adminMain">
         <div className="adminHeader">
           <div>
             <span className="eyebrow">
               <ShieldCheck size={16} />
               {t.superAdmin}
             </span>
-            <h2 id="admin-title">{t.adminTitle}</h2>
-            <p>{t.adminSubtitle}</p>
+            <h2 id="admin-title">{view === 'overview' ? t.adminOverview : view === 'users' ? t.adminUsersCredits : view === 'homepage' ? t.homepageTitle : view === 'provider' ? t.imageProvider : t.contentManagement}</h2>
+            <p>{view === 'homepage' ? t.homepageSubtitle : view === 'provider' ? t.imageProviderSubtitle : t.adminSubtitle}</p>
           </div>
-          <div className="adminHeaderActions">
+          {view === 'overview' ? <div className="adminHeaderActions">
             <div className="adminRangeToggle" role="group" aria-label={t.adminMetrics}>
               {[
                 ['today', t.rangeToday],
@@ -1984,10 +2502,19 @@ function AdminPanel({ open, language, session, casesById, onClose, onOpenCase })
               {status === 'loading' ? <LoaderCircle className="spinIcon" size={17} /> : <RefreshCw size={17} />}
               {t.refresh}
             </button>
-          </div>
+          </div> : null}
         </div>
 
-        {metrics ? (
+        {view === 'overview' && status === 'loading' ? (
+          <div className="adminState adminLoadingState">
+            <LoaderCircle className="spinIcon" size={22} />
+            {t.adminLoading}
+          </div>
+        ) : null}
+        {view === 'overview' && status === 'error' ? (
+          <p className="authMessage error">{message || t.adminLoadFailed}</p>
+        ) : null}
+        {view === 'overview' && metrics ? (
           <div className="adminDashboard">
             <section className="adminBlock">
               <h3>
@@ -2063,6 +2590,7 @@ function AdminPanel({ open, language, session, casesById, onClose, onOpenCase })
           </div>
         ) : null}
 
+        {view === 'users' ? <>
         <div className="adminHeader compact">
           <div>
             <h3>{t.users}</h3>
@@ -2186,9 +2714,390 @@ function AdminPanel({ open, language, session, casesById, onClose, onOpenCase })
             </table>
           </div>
         ) : null}
+        </> : null}
+        {view === 'content' ? <ContentManager language={language} session={session} /> : null}
+        {view === 'homepage' ? <HomepageManager language={language} session={session} casesById={casesById} initialSettings={homepageSettings} onSettingsSaved={onHomepageSettingsSaved} /> : null}
+        {view === 'provider' ? <ImageProviderManager language={language} session={session} /> : null}
+          </div>
+        </div>
       </section>
     </div>
   );
+}
+
+function ImageProviderManager({ language, session }) {
+  const t = copy[language];
+  const [provider, setProvider] = useState('openai');
+  const [available, setAvailable] = useState({ openai: false, ciyuan: false });
+  const [status, setStatus] = useState('loading');
+  const [message, setMessage] = useState('');
+
+  async function load() {
+    setStatus('loading');
+    try {
+      const response = await fetch('/api/admin/image-provider', { headers: getAuthHeaders(session) });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || !payload.ok) throw new Error(payload.error || 'IMAGE_PROVIDER_LOAD_FAILED');
+      setProvider(payload.provider);
+      setAvailable(payload.available || {});
+      setStatus('ready');
+    } catch (error) {
+      setStatus('error');
+      setMessage(error.message);
+    }
+  }
+
+  async function save(nextProvider) {
+    setStatus('saving');
+    setMessage('');
+    try {
+      const response = await fetch('/api/admin/image-provider', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders(session) },
+        body: JSON.stringify({ provider: nextProvider })
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || !payload.ok) throw new Error(payload.error || 'IMAGE_PROVIDER_SAVE_FAILED');
+      setProvider(payload.provider);
+      setMessage(t.providerSaved);
+      setStatus('ready');
+    } catch (error) {
+      setMessage(error.message === 'OPENAI_NOT_CONFIGURED' || error.message === 'CIYUAN_NOT_CONFIGURED' ? t.providerSaveFailed : error.message);
+      setStatus('error');
+    }
+  }
+
+  useEffect(() => { load(); }, [session?.access_token]);
+
+  return (
+    <section className="adminProviderPanel">
+      <div className="adminProviderIntro">
+        <div className="adminProviderIcon"><WandSparkles size={24} /></div>
+        <div>
+          <h3>{t.imageProvider}</h3>
+          <p>{t.imageProviderSubtitle}</p>
+        </div>
+        <button type="button" className="adminHeaderButton" onClick={load} disabled={status === 'loading' || status === 'saving'}><RefreshCw size={16} />{t.refresh}</button>
+      </div>
+      <div className="adminProviderOptions">
+        {[
+          ['openai', t.providerOpenAI, available.openai],
+          ['ciyuan', t.providerCiyuan, available.ciyuan]
+        ].map(([value, label, configured]) => (
+          <button key={value} type="button" className={cx('adminProviderOption', provider === value && 'active')} onClick={() => save(value)} disabled={!configured || status === 'saving'}>
+            <span className="adminProviderRadio">{provider === value ? <Check size={15} /> : null}</span>
+            <span><strong>{label}</strong><small>{configured ? (language === 'zh' ? '已配置，可使用' : 'Configured and ready') : (language === 'zh' ? '未配置服务器 Key' : 'Server key not configured')}</small></span>
+          </button>
+        ))}
+      </div>
+      {message ? <p className={cx('authMessage', status === 'error' ? 'error' : 'sent')}>{message}</p> : null}
+      <div className="adminProviderNote">{language === 'zh' ? '当前默认使用 OpenAI GPT Image 2；词元保留为备用通道。切换只影响后续新请求。' : 'OpenAI GPT Image 2 is the default. Ciyuan remains available as a fallback. Changes affect new requests.'}</div>
+    </section>
+  );
+}
+
+function HomepageManager({ language, session, casesById, initialSettings, onSettingsSaved }) {
+  const t = copy[language];
+  const [settings, setSettings] = useState(() => normalizeHomepageSettings(initialSettings || DEFAULT_HOMEPAGE_SETTINGS));
+  const [status, setStatus] = useState('idle');
+  const [message, setMessage] = useState('');
+  const [uploading, setUploading] = useState(false);
+
+  useEffect(() => {
+    setSettings(normalizeHomepageSettings(initialSettings || DEFAULT_HOMEPAGE_SETTINGS));
+  }, [initialSettings?.heroImageUrl, JSON.stringify(initialSettings?.heroCaseIds || [])]);
+
+  async function loadHomepageSettings() {
+    setStatus('loading');
+    setMessage('');
+    try {
+      const response = await fetch('/api/admin/site/homepage', { headers: getAuthHeaders(session) });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || !payload.ok) throw new Error(payload.error || 'HOMEPAGE_LOAD_FAILED');
+      const next = normalizeHomepageSettings(payload.homepage);
+      setSettings(next);
+      onSettingsSaved?.(next);
+      setStatus('ready');
+    } catch {
+      setStatus('error');
+      setMessage(t.homepageLoadFailed);
+    }
+  }
+
+  useEffect(() => { loadHomepageSettings(); }, [session?.access_token]);
+
+  function setCaseId(index, rawValue) {
+    const next = [...settings.heroCaseIds];
+    const parsed = Number(rawValue);
+    if (!rawValue || !Number.isInteger(parsed) || parsed <= 0) next[index] = undefined;
+    else next[index] = parsed;
+    setSettings({ ...settings, heroCaseIds: next.slice(0, HERO_CASE_COUNT) });
+  }
+
+  async function uploadBackground(event) {
+    const file = event.target.files?.[0];
+    if (!file || !supabase) return;
+    setUploading(true);
+    setMessage('');
+    try {
+      const response = await fetch('/api/admin/content/upload-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders(session) },
+        body: JSON.stringify({ contentType: file.type, scope: 'homepage' })
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || !payload.ok) throw new Error(payload.error || 'UPLOAD_URL_FAILED');
+      const { error } = await supabase.storage.from('content-assets').uploadToSignedUrl(payload.path, payload.token, file);
+      if (error) throw error;
+      setSettings((current) => ({ ...current, heroImageUrl: payload.publicUrl }));
+    } catch {
+      setMessage(t.homepageSaveFailed);
+    } finally {
+      setUploading(false);
+      event.target.value = '';
+    }
+  }
+
+  async function saveHomepage(event) {
+    event.preventDefault();
+    setStatus('saving');
+    setMessage('');
+    const next = normalizeHomepageSettings(settings);
+    try {
+      const response = await fetch('/api/admin/site/homepage', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders(session) },
+        body: JSON.stringify(next)
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || !payload.ok) throw new Error(payload.error || 'HOMEPAGE_SAVE_FAILED');
+      const saved = normalizeHomepageSettings(payload.homepage);
+      setSettings(saved);
+      onSettingsSaved?.(saved);
+      setStatus('ready');
+      setMessage(t.homepageSaved);
+    } catch {
+      setStatus('error');
+      setMessage(t.homepageSaveFailed);
+    }
+  }
+
+  return <section className="homepageManager">
+    <div className="homepageManagerHead">
+      <div>
+        <h3>{t.homepageTitle}</h3>
+        <p>{t.homepageSubtitle}</p>
+      </div>
+      <button type="button" onClick={loadHomepageSettings} disabled={status === 'loading'}>
+        {status === 'loading' ? <LoaderCircle className="spinIcon" size={16} /> : <RefreshCw size={16} />}
+        {t.refresh}
+      </button>
+    </div>
+    {message ? <p className={cx('homepageMessage', status === 'error' && 'error')}>{message}</p> : null}
+    <form className="homepageComposer" onSubmit={saveHomepage}>
+      <div className="homepageBackgroundField">
+        <div className="homepageImagePreview">
+          <img src={settings.heroImageUrl || '/images/visual-atlas/va-hero.png'} alt="" />
+          <span>{t.homepagePreview}</span>
+        </div>
+        <div className="homepageBackgroundControls">
+          <label className="contentField">
+            <span>{t.homepageBackground}</span>
+            <input value={settings.heroImageUrl} onChange={(event) => setSettings({ ...settings, heroImageUrl: event.target.value })} placeholder="https://..." />
+            <small>{t.homepageBackgroundHint}</small>
+          </label>
+          <label className="contentField">
+            <span>{t.uploadImage}</span>
+            <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={uploadBackground} disabled={uploading} />
+            <small>{uploading ? t.uploadingImage : 'JPG, PNG, WebP, GIF'}</small>
+          </label>
+        </div>
+      </div>
+
+      <div className="homepageCasesBlock">
+        <div><h4>{t.homepageCaseCards}</h4><p>{t.homepageCaseHint}</p></div>
+        <div className="homepageCaseGrid">
+          {Array.from({ length: HERO_CASE_COUNT }, (_, index) => {
+            const caseId = settings.heroCaseIds[index] || '';
+            const caseItem = caseId ? casesById?.get(Number(caseId)) : null;
+            return <label className="homepageCaseField" key={index}>
+              <span>{t.homepageCaseCard(index + 1)}</span>
+              <div className="homepageCaseInput"><span>#</span><input type="number" min="1" value={caseId} onChange={(event) => setCaseId(index, event.target.value)} aria-label={`${t.homepageCaseId} ${index + 1}`} /></div>
+              {caseItem ? <div className="homepageCasePreview"><img src={caseItem.image} alt="" /><strong>#{caseItem.id}</strong><small>{caseItem.title}</small></div> : <div className="homepageCaseEmpty">{caseId ? `#${caseId} · ${t.homepagePreviewEmpty}` : t.homepagePreviewEmpty}</div>}
+            </label>;
+          })}
+        </div>
+      </div>
+      <div className="homepageComposerActions">
+        <button className="contentSaveButton" type="submit" disabled={status === 'saving' || uploading}>
+          {status === 'saving' ? <LoaderCircle className="spinIcon" size={16} /> : <Check size={16} />}
+          {t.homepageSave}
+        </button>
+      </div>
+    </form>
+  </section>;
+}
+
+function ContentManager({ language, session }) {
+  const t = copy[language];
+  const [tab, setTab] = useState('cases');
+  const [cases, setCases] = useState([]);
+  const [templates, setTemplates] = useState([]);
+  const [editingCase, setEditingCase] = useState(null);
+  const [editingTemplate, setEditingTemplate] = useState(null);
+  const [status, setStatus] = useState('idle');
+  const [message, setMessage] = useState('');
+  const [uploading, setUploading] = useState(false);
+
+  const emptyCase = () => ({
+    title: '', imageUrl: '', imageAlt: '', prompt: '', sourceLabel: 'Visual Atlas', sourceUrl: '',
+    category: 'Other Use Cases', styles: '', scenes: '', featured: false, published: true, sortOrder: 0
+  });
+  const emptyTemplate = () => ({
+    id: '', titleEn: '', titleZh: '', descriptionEn: '', descriptionZh: '', prompt: '',
+    category: 'Other Use Cases', tags: '', coverUrl: '', published: true, sortOrder: 0
+  });
+
+  async function loadContent() {
+    setStatus('loading');
+    try {
+      const headers = getAuthHeaders(session);
+      const [casesResponse, templatesResponse] = await Promise.all([
+        fetch('/api/admin/content/cases', { headers }),
+        fetch('/api/admin/content/templates', { headers })
+      ]);
+      const casesPayload = await casesResponse.json().catch(() => ({}));
+      const templatesPayload = await templatesResponse.json().catch(() => ({}));
+      if (!casesResponse.ok || !casesPayload.ok || !templatesResponse.ok || !templatesPayload.ok) throw new Error(t.contentLoadFailed);
+      setCases(casesPayload.cases || []);
+      setTemplates(templatesPayload.templates || []);
+      setStatus('ready');
+    } catch (error) {
+      setStatus('error');
+      setMessage(error.message || t.contentLoadFailed);
+    }
+  }
+
+  useEffect(() => { loadContent(); }, [session?.access_token]);
+
+  async function uploadImage(event, target) {
+    const file = event.target.files?.[0];
+    if (!file || !supabase) return;
+    setUploading(true);
+    setMessage('');
+    try {
+      const urlResponse = await fetch('/api/admin/content/upload-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders(session) },
+        body: JSON.stringify({ contentType: file.type })
+      });
+      const payload = await urlResponse.json().catch(() => ({}));
+      if (!urlResponse.ok || !payload.ok) throw new Error(payload.error || t.contentLoadFailed);
+      const { error } = await supabase.storage.from('content-assets').uploadToSignedUrl(payload.path, payload.token, file);
+      if (error) throw error;
+      if (target === 'case') setEditingCase((current) => ({ ...current, imageUrl: payload.publicUrl, imageAlt: current.imageAlt || file.name }));
+      else setEditingTemplate((current) => ({ ...current, coverUrl: payload.publicUrl }));
+    } catch (error) {
+      setMessage(error.message || t.contentLoadFailed);
+    } finally {
+      setUploading(false);
+      event.target.value = '';
+    }
+  }
+
+  async function saveContent(event, kind) {
+    event.preventDefault();
+    const isCase = kind === 'case';
+    const value = isCase ? editingCase : editingTemplate;
+    const endpoint = isCase ? '/api/admin/content/cases' : '/api/admin/content/templates';
+    const isExisting = isCase ? Number(value?.id) > 0 : Boolean(value?.existingId);
+    const method = isExisting ? 'PATCH' : 'POST';
+    const body = isCase ? value : { ...value, id: value.existingId || value.id };
+    setStatus('saving');
+    setMessage('');
+    try {
+      const response = await fetch(endpoint, {
+        method,
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders(session) },
+        body: JSON.stringify(body)
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || !payload.ok) throw new Error(payload.error === 'CASE_REQUIRED_FIELDS' ? t.contentRequired : payload.error || t.contentLoadFailed);
+      setMessage(t.contentSaved);
+      setEditingCase(null);
+      setEditingTemplate(null);
+      await loadContent();
+    } catch (error) {
+      setStatus('error');
+      setMessage(error.message || t.contentLoadFailed);
+    }
+  }
+
+  async function deleteContent(kind, item) {
+    if (!window.confirm(t.deleteContent + '?')) return;
+    const endpoint = kind === 'case' ? '/api/admin/content/cases' : '/api/admin/content/templates';
+    const body = kind === 'case' ? { id: item.id } : { id: item.id };
+    const response = await fetch(endpoint, {
+      method: 'DELETE', headers: { 'Content-Type': 'application/json', ...getAuthHeaders(session) }, body: JSON.stringify(body)
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (response.ok && payload.ok) { setMessage(t.contentDeleted); await loadContent(); }
+    else setMessage(payload.error || t.contentLoadFailed);
+  }
+
+  const field = (label, value, onChange, options = {}) => (
+    <label className="contentField">
+      <span>{label}</span>
+      {options.textarea ? <textarea value={value || ''} onChange={(event) => onChange(event.target.value)} rows={options.rows || 4} /> : <input type={options.type || 'text'} value={value || ''} onChange={(event) => onChange(event.target.value)} />}
+    </label>
+  );
+
+  function renderCaseForm() {
+    if (!editingCase) return null;
+    return <form className="contentEditor" onSubmit={(event) => saveContent(event, 'case')}>
+      <div className="contentEditorHead"><h3>{editingCase.id ? t.editContent : t.newContent}</h3><button type="button" onClick={() => setEditingCase(null)}><X size={16} /></button></div>
+      {field(t.caseTitle, editingCase.title, (value) => setEditingCase({ ...editingCase, title: value }))}
+      {field(t.caseImage, editingCase.imageUrl, (value) => setEditingCase({ ...editingCase, imageUrl: value }))}
+      <label className="contentField"><span>{t.uploadImage}</span><input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={(event) => uploadImage(event, 'case')} disabled={uploading} /><small>{uploading ? t.uploadingImage : 'JPG, PNG, WebP, GIF'}</small></label>
+      {field(t.casePrompt, editingCase.prompt, (value) => setEditingCase({ ...editingCase, prompt: value }), { textarea: true, rows: 8 })}
+      <div className="contentFieldGrid">{field(t.caseCategory, editingCase.category, (value) => setEditingCase({ ...editingCase, category: value }))}{field(t.caseSource, editingCase.sourceLabel, (value) => setEditingCase({ ...editingCase, sourceLabel: value }))}</div>
+      <div className="contentFieldGrid">{field(t.caseStyles, editingCase.styles, (value) => setEditingCase({ ...editingCase, styles: value }))}{field(t.caseScenes, editingCase.scenes, (value) => setEditingCase({ ...editingCase, scenes: value }))}</div>
+      {field(t.caseSourceUrl, editingCase.sourceUrl, (value) => setEditingCase({ ...editingCase, sourceUrl: value }))}
+      <div className="contentChecks"><label><input type="checkbox" checked={Boolean(editingCase.featured)} onChange={(event) => setEditingCase({ ...editingCase, featured: event.target.checked })} /> {t.featuredContent}</label><label><input type="checkbox" checked={editingCase.published !== false} onChange={(event) => setEditingCase({ ...editingCase, published: event.target.checked })} /> {t.publishContent}</label></div>
+      <button className="contentSaveButton" type="submit" disabled={status === 'saving'}>{status === 'saving' ? <LoaderCircle className="spinIcon" size={16} /> : <Check size={16} />} {t.saveContent}</button>
+    </form>;
+  }
+
+  function renderTemplateForm() {
+    if (!editingTemplate) return null;
+    return <form className="contentEditor" onSubmit={(event) => saveContent(event, 'template')}>
+      <div className="contentEditorHead"><h3>{editingTemplate.existingId ? t.editContent : t.newContent}</h3><button type="button" onClick={() => setEditingTemplate(null)}><X size={16} /></button></div>
+      {field(t.templateId, editingTemplate.id, (value) => setEditingTemplate({ ...editingTemplate, id: value }))}
+      <div className="contentFieldGrid">{field(t.templateTitleEn, editingTemplate.titleEn, (value) => setEditingTemplate({ ...editingTemplate, titleEn: value }))}{field(t.templateTitleZh, editingTemplate.titleZh, (value) => setEditingTemplate({ ...editingTemplate, titleZh: value }))}</div>
+      <div className="contentFieldGrid">{field(t.templateDescriptionEn, editingTemplate.descriptionEn, (value) => setEditingTemplate({ ...editingTemplate, descriptionEn: value }))}{field(t.templateDescriptionZh, editingTemplate.descriptionZh, (value) => setEditingTemplate({ ...editingTemplate, descriptionZh: value }))}</div>
+      {field(t.casePrompt, editingTemplate.prompt, (value) => setEditingTemplate({ ...editingTemplate, prompt: value }), { textarea: true, rows: 8 })}
+      <div className="contentFieldGrid">{field(t.caseCategory, editingTemplate.category, (value) => setEditingTemplate({ ...editingTemplate, category: value }))}{field(t.templateTags, editingTemplate.tags, (value) => setEditingTemplate({ ...editingTemplate, tags: value }))}</div>
+      {field(t.templateCover, editingTemplate.coverUrl, (value) => setEditingTemplate({ ...editingTemplate, coverUrl: value }))}
+      <label className="contentField"><span>{t.uploadImage}</span><input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={(event) => uploadImage(event, 'template')} disabled={uploading} /></label>
+      <div className="contentChecks"><label><input type="checkbox" checked={editingTemplate.published !== false} onChange={(event) => setEditingTemplate({ ...editingTemplate, published: event.target.checked })} /> {t.publishContent}</label></div>
+      <button className="contentSaveButton" type="submit" disabled={status === 'saving'}>{status === 'saving' ? <LoaderCircle className="spinIcon" size={16} /> : <Check size={16} />} {t.saveContent}</button>
+    </form>;
+  }
+
+  return <section className="contentManager">
+    <div className="contentManagerHead"><div><h3>{t.contentManagement}</h3><p>{t.contentCases} / {t.contentTemplates}</p></div><button type="button" onClick={() => tab === 'cases' ? setEditingCase(emptyCase()) : setEditingTemplate(emptyTemplate())}><WandSparkles size={16} /> {t.newContent}</button></div>
+    <div className="contentTabs"><button className={cx(tab === 'cases' && 'active')} type="button" onClick={() => setTab('cases')}>{t.contentCases} ({cases.length})</button><button className={cx(tab === 'templates' && 'active')} type="button" onClick={() => setTab('templates')}>{t.contentTemplates} ({templates.length})</button><button type="button" onClick={loadContent}><RefreshCw size={15} /></button></div>
+    {message ? <p className="contentMessage">{message}</p> : null}
+    <div className="contentWorkspace">
+      <div className="contentListPane">
+        {tab === 'cases' ? <div className="contentList">{cases.map((item) => <article className="contentRow" key={item.id}><img src={item.image} alt="" /><div><strong>#{item.id} {item.title}</strong><span>{item.category} · {item.published ? t.publishContent : t.draftContent}</span><small>{item.promptPreview}</small></div><div className="contentRowActions"><button type="button" onClick={() => setEditingCase({ ...item, imageUrl: item.image, sourceLabel: item.sourceLabel, sourceUrl: item.sourceUrl, styles: (item.styles || []).join(', '), scenes: (item.scenes || []).join(', ') })}><Settings size={15} /></button><button type="button" onClick={() => deleteContent('case', item)}><X size={15} /></button></div></article>)}</div> : <div className="contentList">{templates.map((item) => <article className="contentRow" key={item.id}>{item.cover ? <img src={item.cover} alt="" /> : <div className="contentThumbEmpty"><Sparkles size={16} /></div>}<div><strong>{textFor(item.title, language)}</strong><span>{item.category}</span><small>{textFor(item.description, language)}</small></div><div className="contentRowActions"><button type="button" onClick={() => setEditingTemplate({ existingId: item.id, id: item.id, titleEn: item.title.en, titleZh: item.title.zh, descriptionEn: item.description.en, descriptionZh: item.description.zh, prompt: item.prompt, category: item.category, tags: (item.tags || []).join(', '), coverUrl: item.cover, published: item.published })}><Settings size={15} /></button><button type="button" onClick={() => deleteContent('template', item)}><X size={15} /></button></div></article>)}</div>}
+      </div>
+      <div className="contentEditorPane">
+        {tab === 'cases' ? renderCaseForm() : renderTemplateForm()}
+        {!editingCase && !editingTemplate ? <div className="contentEmptyEditor"><WandSparkles size={25} /><strong>{t.newContent}</strong><span>Choose an item to edit or create a new record.</span></div> : null}
+      </div>
+    </div>
+  </section>;
 }
 
 function BillingPanel({
@@ -2468,10 +3377,26 @@ function BillingPanel({
 function SkillSection({ language, repoUrl }) {
   const t = copy[language];
   const [commandCopied, setCommandCopied] = useState(false);
+  const [skillMeta, setSkillMeta] = useState({ local: true, version: 'local' });
   const installCommand =
     'npx skills add fuxiworkspace-lgtm/gpt-image2-visual-atlas --skill gpt-image-2-style-library --agent claude-code codex --global --yes --copy';
   const skillSourceUrl = `${repoUrl}/tree/main/agents/skills/gpt-image-2-style-library`;
   const npmUrl = 'https://www.npmjs.com/package/gpt-image-2-style-library';
+
+  useEffect(() => {
+    let cancelled = false;
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => controller.abort(), 3500);
+    fetch('/api/skill/github', { signal: controller.signal })
+      .then((response) => response.ok ? response.json() : null)
+      .then((payload) => {
+        if (!cancelled && payload?.ok) setSkillMeta(payload.skill);
+      })
+      .catch(() => {
+        if (!cancelled) setSkillMeta({ local: true, version: 'local' });
+      });
+    return () => { cancelled = true; window.clearTimeout(timer); controller.abort(); };
+  }, []);
 
   async function handleCopyCommand() {
     await copyToClipboard(installCommand);
@@ -2500,6 +3425,10 @@ function SkillSection({ language, repoUrl }) {
                 </span>
               );
             })}
+          </div>
+          <div className={cx('skillSyncStatus', skillMeta?.unavailable && 'unavailable')}>
+            <Github size={15} />
+            {skillMeta?.local ? t.skillGitHubFallback : (skillMeta?.unavailable ? t.skillGitHubUnavailable : `${t.skillGitHubSync} · ${skillMeta.version || 'main'}`)}
           </div>
           <div className="skillCommand">
             <div className="skillCommandHeader">
@@ -2535,6 +3464,347 @@ function SkillSection({ language, repoUrl }) {
         </figure>
       </div>
     </section>
+  );
+}
+
+function ReversePromptSection({ language, cases, session, onAuthRequired, onCopyText, onOpenCase }) {
+  const t = copy[language];
+  const fileInputRef = useRef(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewImage, setPreviewImage] = useState('');
+  const [status, setStatus] = useState('empty');
+  const [error, setError] = useState('');
+  const [outputLanguage, setOutputLanguage] = useState(language === 'zh' ? 'zh-CN' : 'en');
+  const [detail, setDetail] = useState('professional');
+  const [purpose, setPurpose] = useState('general');
+  const [result, setResult] = useState(null);
+  const [persisted, setPersisted] = useState(true);
+  const [history, setHistory] = useState(() => readReversePromptHistory());
+  const [activeHistoryId, setActiveHistoryId] = useState('');
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (language === 'zh' && outputLanguage === 'en') setOutputLanguage('zh-CN');
+  }, [language, outputLanguage]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!session?.access_token) return undefined;
+
+    fetch('/api/reverse-prompt', { headers: getAuthHeaders(session) })
+      .then((response) => response.json().catch(() => ({})))
+      .then((payload) => {
+        if (cancelled || !payload?.ok || !Array.isArray(payload.history)) return;
+        setHistory(payload.history);
+        if (payload.history[0]) {
+          setActiveHistoryId(payload.history[0].id);
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.access_token]);
+
+  function updateHistory(nextResult, image = previewImage, id = activeHistoryId) {
+    if (!nextResult) return;
+    const nextId = id || `reverse-${Date.now()}`;
+    const nextRow = {
+      id: nextId,
+      image,
+      fileName: selectedFile?.name || '',
+      createdAt: new Date().toISOString(),
+      result: nextResult
+    };
+    const nextHistory = [nextRow, ...history.filter((row) => row.id !== nextId)].slice(0, 12);
+    setActiveHistoryId(nextId);
+    setHistory(nextHistory);
+    writeReversePromptHistory(nextHistory);
+  }
+
+  async function selectFile(file) {
+    if (!file) return;
+    const allowed = ['image/png', 'image/jpeg', 'image/webp'];
+    if (!allowed.includes(file.type) || file.size > MAX_REVERSE_IMAGE_BYTES) {
+      setError(t.reverseUnsupported);
+      setStatus('unsupported');
+      return;
+    }
+    try {
+      const dataUrl = await compressReverseImage(file);
+      setSelectedFile(file);
+      setPreviewImage(dataUrl);
+      setResult(null);
+      setPersisted(true);
+      setActiveHistoryId('');
+      setError('');
+      setStatus('selected');
+    } catch {
+      setError(t.reverseFailed);
+      setStatus('failed');
+    }
+  }
+
+  function handleFileChange(event) {
+    selectFile(event.target.files?.[0]);
+    event.target.value = '';
+  }
+
+  async function handleAnalyze() {
+    if (!previewImage) {
+      setError(t.reverseNoImage);
+      setStatus('empty');
+      return;
+    }
+    if (!session?.access_token) {
+      onAuthRequired();
+      return;
+    }
+    setError('');
+    setStatus('analyzing');
+    const stages = [
+      { delay: 500, label: t.reverseReading },
+      { delay: 1100, label: t.reverseRecognizing },
+      { delay: 1800, label: t.reverseComposing }
+    ];
+    const stageTimers = stages.map(({ delay, label }) => window.setTimeout(() => setError(label), delay));
+    try {
+      const response = await fetch('/api/reverse-prompt', {
+        method: 'POST',
+        headers: { ...getAuthHeaders(session), 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          image: previewImage,
+          fileName: selectedFile?.name || 'reference-image',
+          outputLanguage,
+          detail,
+          purpose
+        })
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || !payload?.ok || !payload.result) {
+        throw new Error(payload?.error || 'REVERSE_ANALYSIS_FAILED');
+      }
+      setResult(payload.result);
+      setPersisted(payload.saved !== false);
+      setError(payload.saved === false ? t.reverseStoragePending : '');
+      setStatus('success');
+      updateHistory(payload.result, payload.run?.image || previewImage, payload.run?.id || '');
+    } catch (error) {
+      const errorCode = error?.message || 'REVERSE_ANALYSIS_FAILED';
+      if (errorCode === 'AUTH_REQUIRED') onAuthRequired();
+      setError(reversePromptErrorMessage(errorCode, language));
+      setStatus('failed');
+    } finally {
+      stageTimers.forEach((timer) => window.clearTimeout(timer));
+    }
+  }
+
+  function loadHistory(row) {
+    setActiveHistoryId(row.id);
+    setPreviewImage(row.image || '');
+    setSelectedFile(row.fileName ? { name: row.fileName } : null);
+    setResult(row.result || null);
+    setPersisted(true);
+    setStatus(row.result ? 'success' : 'empty');
+    setError('');
+  }
+
+  function removeHistory(event, id) {
+    event.stopPropagation();
+    const nextHistory = history.filter((row) => row.id !== id);
+    setHistory(nextHistory);
+    writeReversePromptHistory(nextHistory);
+    if (session?.access_token && !id.startsWith('reverse-')) {
+      fetch(`/api/reverse-prompt?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(session)
+      }).catch(() => {});
+    }
+    if (activeHistoryId === id) {
+      setActiveHistoryId('');
+      setResult(null);
+      setPersisted(true);
+      setPreviewImage('');
+      setStatus('empty');
+    }
+  }
+
+  function updateResult(nextResult) {
+    setResult(nextResult);
+    if (activeHistoryId) updateHistory(nextResult, previewImage, activeHistoryId);
+  }
+
+  function copyPrompt() {
+    if (!result?.prompt) return;
+    onCopyText(result.prompt, 'reverse-prompt');
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1600);
+  }
+
+  const isBusy = status === 'analyzing';
+  const inspirationCases = (cases || []).slice(0, 4);
+
+  return (
+    <section className="reversePromptSection" id="reverse-prompt">
+      <div className="reversePromptHeader">
+        <div>
+          <span className="eyebrow">{t.reverseEyebrow}</span>
+          <h2>{t.reverseTitle}</h2>
+          <p>{t.reverseSubtitle}</p>
+        </div>
+        <div className="reversePromptHeaderMeta"><FileImage size={17} /> <span>{t.reverseSaved}</span></div>
+      </div>
+
+      <div className="reversePromptWorkspace">
+        <div className="reversePromptMain">
+          <div className="reversePromptInputGrid">
+            <div className={cx('reverseUploadCard', previewImage && 'hasImage')}>
+              {previewImage ? (
+                <div className="reverseImagePreview">
+                  <img src={previewImage} alt={selectedFile?.name || t.reverseUpload} />
+                  <div className="reverseImageOverlay">
+                    <button type="button" onClick={() => fileInputRef.current?.click()}><Upload size={15} />{t.reverseReplace}</button>
+                    <button type="button" onClick={() => { setPreviewImage(''); setSelectedFile(null); setResult(null); setPersisted(true); setStatus('empty'); }}><Trash2 size={15} />{t.reverseRemove}</button>
+                  </div>
+                </div>
+              ) : (
+                <button className="reverseUploadEmpty" type="button" onClick={() => fileInputRef.current?.click()}>
+                  <span className="reverseUploadIcon"><Upload size={22} /></span>
+                  <strong>{t.reverseUpload}</strong>
+                  <small>{t.reverseDropHint}</small>
+                </button>
+              )}
+              <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/webp" onChange={handleFileChange} hidden />
+            </div>
+
+            <div className="reverseOutputCard">
+              {result ? (
+                <>
+                  <div className="reverseOutputTopline"><span>{persisted ? t.reverseSuccess : t.reverseStoragePending}</span><span className="reverseConfidence">{Math.round(Number(result.confidence || 0) * 100)}%</span></div>
+                  <div className="reverseSummaryField"><span>{t.reverseSummary}</span><strong>{result.summary}</strong></div>
+                  <textarea
+                    className="reversePromptEditor"
+                    value={result.prompt}
+                    onChange={(event) => updateResult({ ...result, prompt: event.target.value })}
+                    aria-label={t.reverseFullPrompt}
+                  />
+                </>
+              ) : (
+                <div className="reverseOutputEmpty">
+                  <WandSparkles size={22} />
+                  <strong>{isBusy ? t.reverseAnalyze : t.reverseFullPrompt}</strong>
+                  <p>{isBusy ? (error || t.reverseAnalyze) : t.reverseNoImage}</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="reversePromptControls">
+            <label><span>{t.reverseLanguage}</span><select value={outputLanguage} onChange={(event) => setOutputLanguage(event.target.value)}><option value="zh-CN">{t.reverseChinese}</option><option value="en">{t.reverseEnglish}</option><option value="bilingual">{t.reverseBilingual}</option></select></label>
+            <label><span>{t.reverseDetail}</span><select value={detail} onChange={(event) => setDetail(event.target.value)}><option value="concise">{t.reverseConcise}</option><option value="standard">{t.reverseStandard}</option><option value="professional">{t.reverseProfessional}</option></select></label>
+            <label><span>{t.reversePurpose}</span><select value={purpose} onChange={(event) => setPurpose(event.target.value)}><option value="general">{t.reverseGeneral}</option><option value="advertising">{t.reverseAdvertising}</option><option value="portrait">{t.reversePortrait}</option><option value="poster">{t.reversePoster}</option><option value="infographic">{t.reverseInfographic}</option></select></label>
+            <button className="reversePrimaryButton" type="button" onClick={handleAnalyze} disabled={isBusy || !previewImage}>{isBusy ? <LoaderCircle className="spinIcon" size={16} /> : <WandSparkles size={16} />}{isBusy ? t.reverseAnalyze : result ? t.reverseRetry : t.reverseStart}</button>
+          </div>
+          {error && status !== 'analyzing' ? <p className="reversePromptError">{error}</p> : null}
+
+          {result ? (
+            <div className="reverseResultArea">
+              <div className="reverseResultHeader"><div><span className="eyebrow">{t.reverseSuccess}</span><h3>{t.reverseFullPrompt}</h3></div><div className="reverseResultActions"><button type="button" onClick={copyPrompt}>{copied ? <Check size={15} /> : <Copy size={15} />}{copied ? t.reverseCopied : t.reverseCopy}</button><button type="button" onClick={copyPrompt}><Upload size={15} />{t.reverseIntoCreate}</button></div></div>
+              <div className="reverseStructureGrid">
+                {result.sections.map((section, index) => (
+                  <label className="reverseStructureField" key={`${section.label}-${index}`}><span>{section.label}</span><textarea value={section.value} onChange={(event) => updateResult({ ...result, sections: result.sections.map((item, itemIndex) => itemIndex === index ? { ...item, value: event.target.value } : item) })} /></label>
+                ))}
+              </div>
+              <div className="reverseSpecialFields"><label><span>{t.reverseNegative}</span><textarea value={result.negative} onChange={(event) => updateResult({ ...result, negative: event.target.value })} /></label><label><span>{t.reverseUncertainties}</span><textarea value={result.uncertainties} onChange={(event) => updateResult({ ...result, uncertainties: event.target.value })} /></label></div>
+            </div>
+          ) : null}
+        </div>
+
+        <aside className="reverseHistoryPanel">
+          <div className="reverseHistoryTitle"><span><History size={16} />{t.reverseHistory}</span><b>{history.length}</b></div>
+          {history.length ? history.map((row) => (
+            <button className={cx('reverseHistoryRow', activeHistoryId === row.id && 'active')} type="button" onClick={() => loadHistory(row)} key={row.id}>
+              {row.image ? <img src={row.image} alt="" /> : <span className="reverseHistoryThumb"><FileImage size={16} /></span>}
+              <span><strong>{row.result?.summary || row.fileName || t.reverseTitle}</strong><small>{new Date(row.createdAt).toLocaleDateString(language === 'zh' ? 'zh-CN' : 'en-US')}</small></span>
+              <i onClick={(event) => removeHistory(event, row.id)} aria-label={t.reverseRemove}><Trash2 size={14} /></i>
+            </button>
+          )) : <p className="reverseHistoryEmpty">{t.reverseEmptyHistory}</p>}
+          <button className="reverseNewButton" type="button" onClick={() => { setResult(null); setPersisted(true); setPreviewImage(''); setSelectedFile(null); setActiveHistoryId(''); setStatus('empty'); setError(''); }}><RefreshCw size={15} />{t.reverseNew}</button>
+        </aside>
+      </div>
+
+      <div className="reverseInspirationHeader"><div><span className="eyebrow">{t.reverseInspiration}</span><p>{t.reverseInspirationSubtitle}</p></div></div>
+      <div className="reverseInspirationGrid">
+        {inspirationCases.map((caseItem) => <button type="button" key={`reverse-inspiration-${caseItem.id}`} onClick={() => onOpenCase(caseItem)}><img src={caseItem.image} alt={caseItem.imageAlt} loading="lazy" /><span>#{caseItem.id}</span></button>)}
+      </div>
+    </section>
+  );
+}
+
+function ReversePromptPage({ language, cases, session, onCopyText, onOpenCase, onOpenAccount, onAuthRequired }) {
+  const t = copy[language];
+
+  return (
+    <div className="reversePromptPage">
+      <aside className="archiveRail reversePromptPageRail" aria-label={language === 'zh' ? '反推提示词工作台导航' : 'Reverse Prompt Studio navigation'}>
+        <a className="archiveRailBrand" href="#" aria-label={t.brand}>
+          <span className="archiveRailLogo">VA<span>•</span></span>
+          <span className="archiveRailBrandCopy"><strong>Visual Atlas</strong><small>{language === 'zh' ? '视觉图鉴' : 'VISUAL ARCHIVE'}</small></span>
+        </a>
+
+        <div className="archiveRailGroup">
+          <span className="archiveRailGroupLabel">{language === 'zh' ? '浏览' : 'BROWSE'}</span>
+          <a className="archiveRailItem" href="#gallery"><ImageIcon size={17} /><span>{t.navCases}</span></a>
+          <a className="archiveRailItem active" href="#reverse-prompt" aria-current="page"><WandSparkles size={17} /><span>{t.navReversePrompt}</span></a>
+        </div>
+
+        <div className="archiveRailGroup">
+          <span className="archiveRailGroupLabel">{language === 'zh' ? '资源' : 'LIBRARY'}</span>
+          <a className="archiveRailItem" href="#templates"><PackageCheck size={17} /><span>{t.navTemplates}</span></a>
+          <a className="archiveRailItem" href="#agent-skill"><Sparkles size={17} /><span>{t.navSkill}</span></a>
+          <button className="archiveRailItem" type="button" onClick={() => onOpenAccount('favorites')} aria-label={t.favorites}>
+            <Heart size={17} /><span>{t.favorites}</span>
+          </button>
+        </div>
+
+        <div className="archiveRailGroup">
+          <span className="archiveRailGroupLabel">{language === 'zh' ? '连接' : 'CONNECT'}</span>
+          <ArchiveCommunityItem language={language} />
+          <a className="archiveRailItem" href={sponsorUrl} target="_blank" rel="noreferrer"><Heart size={17} /><span>{t.navSponsor}</span></a>
+          <a className="archiveRailItem" href={fallbackRepoUrl} target="_blank" rel="noreferrer"><Github size={17} /><span>GitHub</span></a>
+        </div>
+
+        <div className="archiveRailSpacer" />
+        <div className="archiveRailFuture" title={language === 'zh' ? '未来可在这里接入新模块' : 'New modules can be added here later'}>
+          <WandSparkles size={15} />
+          <span>{language === 'zh' ? '扩展模块' : 'EXTENSIONS'}</span>
+          <b>+</b>
+        </div>
+        <div className="archiveRailGroup archiveRailAccountGroup">
+          <span className="archiveRailGroupLabel">{language === 'zh' ? '账户' : 'ACCOUNT'}</span>
+          <a className="archiveRailItem" href={personalCommunityUrl}><Crown size={17} /><span>{t.navPersonalCommunity}</span></a>
+          <button className="archiveRailItem archiveRailMember" type="button" onClick={() => onOpenAccount('overview')} aria-label={t.account}>
+            <UserCircle size={17} /><span>{t.account}</span>
+          </button>
+        </div>
+      </aside>
+
+      <div className="reversePromptPageContent">
+        <div className="reversePromptPageKicker">
+          <a href="#gallery"><ArrowLeft size={15} />{language === 'zh' ? '返回视觉档案' : 'Back to archive'}</a>
+          <span>{language === 'zh' ? '独立工作台' : 'STANDALONE WORKSPACE'}</span>
+        </div>
+        <ReversePromptSection
+          language={language}
+          cases={cases}
+          session={session}
+          onAuthRequired={onAuthRequired}
+          onCopyText={onCopyText}
+          onOpenCase={onOpenCase}
+        />
+      </div>
+    </div>
   );
 }
 
@@ -2793,6 +4063,9 @@ function PreviewDialog({
 
     setGenerationState({ status: 'generating', image: '', message: '' });
 
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), GENERATION_REQUEST_TIMEOUT_MS);
+
     try {
       const response = await fetch('/api/generate-image', {
         method: 'POST',
@@ -2800,6 +4073,7 @@ function PreviewDialog({
           'Content-Type': 'application/json',
           ...getAuthHeaders(session)
         },
+        signal: controller.signal,
         body: JSON.stringify({
           caseId: item.id,
           prompt
@@ -2826,11 +4100,14 @@ function PreviewDialog({
       if (payload.user) onProfileChange(payload.user);
       setGenerationState({ status: 'success', image: payload.image, message: '', prompt, savedAt });
     } catch (error) {
+      const requestError = error?.name === 'AbortError' ? new Error('GENERATION_TIMEOUT') : error;
       setGenerationState({
         status: 'error',
         image: '',
-        message: generationErrorMessage(error.message, language)
+        message: generationErrorMessage(requestError.message, language)
       });
+    } finally {
+      window.clearTimeout(timeoutId);
     }
   }
 
@@ -2847,7 +4124,13 @@ function PreviewDialog({
           <X size={20} />
         </button>
         <div className={cx('previewMedia', generatedImage && 'hasComparison')}>
-          {generatedImage ? (
+          {isGenerating ? (
+            <div className="generationLoadingState" role="status" aria-live="polite">
+              <LoaderCircle className="spinIcon" size={30} />
+              <strong>{t.generating}</strong>
+              <span>{t.generationInProgress}</span>
+            </div>
+          ) : generatedImage ? (
             <div className="comparisonGrid">
               <figure className="comparisonFigure">
                 <div className="comparisonLabel">{t.originalImage}</div>
@@ -2858,7 +4141,15 @@ function PreviewDialog({
                   {t.generatedResult}
                   {generationState.status === 'saved' ? <span>{t.savedInBrowser}</span> : null}
                 </div>
-                <img src={generatedImage} alt={t.generatedResult} />
+                <img
+                  src={generatedImage}
+                  alt={t.generatedResult}
+                  onError={() => setGenerationState({
+                    status: 'error',
+                    image: '',
+                    message: t.generationFailed
+                  })}
+                />
               </figure>
             </div>
           ) : (
@@ -3007,11 +4298,16 @@ function App() {
   useGaPageViews();
   const [siteData, setSiteData] = useState(null);
   const [styleLibrary, setStyleLibrary] = useState(null);
+  const [homepageSettings, setHomepageSettings] = useState(DEFAULT_HOMEPAGE_SETTINGS);
   const [language, setLanguage] = useState(() => localStorage.getItem('language') || 'en');
+  const [themeMode, setThemeMode] = useState(() => localStorage.getItem('visual-atlas-theme') || 'system');
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('All');
   const [style, setStyle] = useState('All');
   const [scene, setScene] = useState('All');
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [archiveActive, setArchiveActive] = useState(false);
+  const [page, setPage] = useState(() => window.location.hash === '#reverse-prompt' ? 'reverse-prompt' : 'home');
   const [preview, setPreview] = useState(null);
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
@@ -3028,17 +4324,35 @@ function App() {
   const { copiedId, copyPrompt, copyText } = useCopy();
   const repoUrl = siteData?.repository || fallbackRepoUrl;
   const t = copy[language];
+  const isReversePromptPage = page === 'reverse-prompt';
+
+  useEffect(() => {
+    const syncPage = () => setPage(window.location.hash === '#reverse-prompt' ? 'reverse-prompt' : 'home');
+    window.addEventListener('hashchange', syncPage);
+    return () => window.removeEventListener('hashchange', syncPage);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
     Promise.all([
       fetch('/cases.json').then((response) => response.json()),
-      fetch('/style-library.json').then((response) => response.json())
+      fetch('/style-library.json').then((response) => response.json()),
+      fetch('/api/content/cases').then((response) => response.ok ? response.json() : { cases: [] }).catch(() => ({ cases: [] })),
+      fetch('/api/content/templates').then((response) => response.ok ? response.json() : { templates: [] }).catch(() => ({ templates: [] })),
+      fetch('/api/site/homepage').then((response) => response.ok ? response.json() : { homepage: DEFAULT_HOMEPAGE_SETTINGS }).catch(() => ({ homepage: DEFAULT_HOMEPAGE_SETTINGS }))
     ])
-      .then(([payload, library]) => {
+      .then(([payload, library, databaseCases, databaseTemplates, homepage]) => {
         if (!cancelled) {
-          setSiteData(payload);
-          setStyleLibrary(library);
+          const managedCases = databaseCases?.cases || [];
+          const managedTemplates = databaseTemplates?.templates || [];
+          const caseIds = new Set(managedCases.map((item) => item.id));
+          setSiteData({
+            ...payload,
+            cases: [...managedCases, ...(payload.cases || []).filter((item) => !caseIds.has(item.id))],
+            totalCases: managedCases.length + (payload.cases || []).length
+          });
+          setStyleLibrary({ ...library, templates: [...managedTemplates, ...(library.templates || [])] });
+          setHomepageSettings(normalizeHomepageSettings(homepage?.homepage || DEFAULT_HOMEPAGE_SETTINGS));
         }
       });
     return () => {
@@ -3050,6 +4364,46 @@ function App() {
     localStorage.setItem('language', language);
     document.documentElement.lang = language === 'zh' ? 'zh-CN' : 'en';
   }, [language]);
+
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    const syncTheme = () => {
+      const resolvedTheme = themeMode === 'system' ? (media.matches ? 'dark' : 'light') : themeMode;
+      document.documentElement.dataset.theme = resolvedTheme;
+      document.documentElement.style.colorScheme = resolvedTheme;
+    };
+
+    syncTheme();
+    media.addEventListener('change', syncTheme);
+    localStorage.setItem('visual-atlas-theme', themeMode);
+    return () => media.removeEventListener('change', syncTheme);
+  }, [themeMode]);
+
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (!hash || isReversePromptPage) return undefined;
+
+    const target = document.getElementById(hash.slice(1));
+    if (!target) return undefined;
+
+    let firstFrame;
+    let secondFrame;
+    firstFrame = window.requestAnimationFrame(() => {
+      secondFrame = window.requestAnimationFrame(() => {
+        target.scrollIntoView({ block: 'start' });
+      });
+    });
+
+    return () => {
+      window.cancelAnimationFrame(firstFrame);
+      if (secondFrame) window.cancelAnimationFrame(secondFrame);
+    };
+  }, [themeMode, isReversePromptPage]);
+
+  useEffect(() => {
+    if (!isReversePromptPage) return;
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  }, [isReversePromptPage]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -3099,8 +4453,8 @@ function App() {
     })
       .then((response) => response.json())
       .then((payload) => {
-        if (!cancelled && payload?.ok) {
-          setProfile(payload.user);
+        if (!cancelled) {
+          setProfile(payload?.ok ? payload.user || null : null);
         }
       })
       .catch(() => {
@@ -3156,13 +4510,24 @@ function App() {
   }, [session?.access_token]);
 
   useEffect(() => {
-    if (!siteData || !styleLibrary || !window.location.hash) return;
+    if (!siteData || !styleLibrary || !window.location.hash || isReversePromptPage) return;
     const target = document.getElementById(window.location.hash.slice(1));
     if (!target) return;
     window.requestAnimationFrame(() => {
       target.scrollIntoView({ block: 'start' });
     });
-  }, [siteData, styleLibrary]);
+  }, [siteData, styleLibrary, page, isReversePromptPage]);
+
+  useEffect(() => {
+    const gallery = document.getElementById('gallery');
+    if (!gallery || !window.IntersectionObserver) return undefined;
+    const observer = new IntersectionObserver(([entry]) => setArchiveActive(entry.isIntersecting), {
+      rootMargin: '-92px 0px -42% 0px',
+      threshold: 0
+    });
+    observer.observe(gallery);
+    return () => observer.disconnect();
+  }, [siteData, styleLibrary, page]);
 
   function openAuth() {
     setAuthErrorCode('');
@@ -3188,10 +4553,11 @@ function App() {
     return [...siteData.cases].sort((a, b) => b.id - a.id);
   }, [siteData]);
 
-  const heroCases = useMemo(
-    () => takeDistinctCases(latestCases, HERO_CASE_COUNT),
-    [latestCases]
-  );
+  const heroCases = useMemo(() => {
+    const casesById = new Map(latestCases.map((item) => [Number(item.id), item]));
+    const configured = homepageSettings.heroCaseIds.map((id) => casesById.get(Number(id))).filter(Boolean);
+    return configured.length ? configured : takeDistinctCases(latestCases, HERO_CASE_COUNT);
+  }, [homepageSettings.heroCaseIds, latestCases]);
 
   const hotStripCases = useMemo(
     () => takeDistinctCases(
@@ -3353,34 +4719,41 @@ function App() {
 
   return (
     <main>
-      <header className="topbar">
+      <header className={cx('topbar', archiveActive && !isReversePromptPage && 'archiveTopbar', isReversePromptPage && 'reverseTopbar')}>
         <a className="brand" href="#">
           <WandSparkles size={21} />
           {t.brand}
         </a>
         <div className="topbarControls">
           <nav>
-            <a href="#gallery">{t.navCases}</a>
-            <a href="#templates">{t.navTemplates}</a>
-            <a href="#agent-skill">{t.navSkill}</a>
-            <CommunityNavItem language={language} />
-            <a
-              className="sponsorNavLink"
-              href={sponsorUrl}
-              target="_blank"
-              rel="noreferrer"
-              aria-label={t.sponsorProjectLabel}
-            >
-              <Heart size={16} />
-              {t.navSponsor}
-            </a>
-            <a href={membershipUrl} target="_blank" rel="noreferrer">
-              {t.navMembership}
-            </a>
-            <a href={repoUrl} target="_blank" rel="noreferrer">
-              GitHub
-            </a>
+            {isReversePromptPage ? (
+              <a href="#gallery"><ArrowLeft size={15} />{language === 'zh' ? '返回视觉档案' : 'Back to archive'}</a>
+            ) : (
+              <>
+                <a href="#gallery">{t.navCases}</a>
+                <a href="#templates">{t.navTemplates}</a>
+                <a href="#agent-skill">{t.navSkill}</a>
+                <CommunityNavItem language={language} />
+                <a
+                  className="sponsorNavLink"
+                  href={sponsorUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={t.sponsorProjectLabel}
+                >
+                  <Heart size={16} />
+                  {t.navSponsor}
+                </a>
+                <a href={personalCommunityUrl}>
+                  {t.navPersonalCommunity}
+                </a>
+                <a href={repoUrl} target="_blank" rel="noreferrer">
+                  GitHub
+                </a>
+              </>
+            )}
           </nav>
+          <ThemeSwitch language={language} themeMode={themeMode} setThemeMode={setThemeMode} />
           <LanguageSwitch language={language} setLanguage={setLanguage} />
           <UserMenu
             language={language}
@@ -3400,8 +4773,21 @@ function App() {
       </header>
       {favoriteMessage ? <div className="toastNotice">{favoriteMessage}</div> : null}
 
+      {isReversePromptPage ? (
+        <ReversePromptPage
+          language={language}
+          cases={latestCases}
+          session={session}
+          onCopyText={copyText}
+          onOpenCase={(item) => setPreview({ type: 'case', item })}
+          onOpenAccount={handleOpenAccount}
+          onAuthRequired={openAuth}
+        />
+      ) : (
+        <>
       <Hero
-        latestCases={heroCases}
+        heroCases={heroCases}
+        heroImageUrl={homepageSettings.heroImageUrl}
         language={language}
         repoUrl={repoUrl}
         totalCases={siteData.totalCases}
@@ -3424,91 +4810,133 @@ function App() {
       </section>
 
       <section className="gallerySection" id="gallery">
-        <div className="sectionHead">
+        <div className="sectionHead galleryIntro">
           <div>
             <span className="eyebrow">{t.sectionEyebrow}</span>
             <h2>{t.sectionTitle}</h2>
           </div>
-          <div className="searchBox">
-            <Search size={18} />
-            <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder={t.search}
-            />
-          </div>
         </div>
 
-        <div className="filterPanel">
-          <div>
-            <strong>{t.category}</strong>
-            <div className="filterRow">
-              <FilterPill active={category === 'All'} onClick={() => setCategory('All')}>{t.all}</FilterPill>
-              {orderedCategories.map((item) => (
-                <FilterPill key={item} active={category === item} onClick={() => setCategory(item)}>
-                  {localizeLabel(item, language, styleLibrary)}
-                </FilterPill>
+        <div className="archiveBrowser">
+          <aside className="archiveRail" aria-label="Archive modules">
+            <a className="archiveRailBrand" href="#" aria-label={t.brand}>
+              <span className="archiveRailLogo">VA<span>•</span></span>
+              <span className="archiveRailBrandCopy"><strong>Visual Atlas</strong><small>{language === 'zh' ? '视觉图鉴' : 'VISUAL ARCHIVE'}</small></span>
+            </a>
+
+            <div className="archiveRailGroup">
+              <span className="archiveRailGroupLabel">{language === 'zh' ? '浏览' : 'BROWSE'}</span>
+              <button className="archiveRailItem active" type="button" aria-label={t.navCases}>
+                <ImageIcon size={17} />
+                <span>{t.navCases}</span>
+              </button>
+              <button className="archiveRailItem" type="button" onClick={() => setFilterOpen(true)} aria-label={t.search}>
+                <Search size={17} /><span>{t.search}</span>
+              </button>
+            </div>
+
+            <div className="archiveRailGroup">
+              <span className="archiveRailGroupLabel">{language === 'zh' ? '资源' : 'LIBRARY'}</span>
+              <a className="archiveRailItem" href="#templates"><PackageCheck size={17} /><span>{t.navTemplates}</span></a>
+              <a className="archiveRailItem" href="#agent-skill"><Sparkles size={17} /><span>{t.navSkill}</span></a>
+              <a className="archiveRailItem" href="#reverse-prompt"><WandSparkles size={17} /><span>{t.navReversePrompt}</span></a>
+              <button className="archiveRailItem" type="button" onClick={() => handleOpenAccount('favorites')} aria-label={t.favorites}>
+                <Heart size={17} /><span>{t.favorites}</span>
+              </button>
+            </div>
+
+            <div className="archiveRailGroup">
+              <span className="archiveRailGroupLabel">{language === 'zh' ? '连接' : 'CONNECT'}</span>
+              <ArchiveCommunityItem language={language} />
+              <a className="archiveRailItem" href={sponsorUrl} target="_blank" rel="noreferrer"><Heart size={17} /><span>{t.navSponsor}</span></a>
+              <a className="archiveRailItem" href={repoUrl} target="_blank" rel="noreferrer"><Github size={17} /><span>GitHub</span></a>
+            </div>
+
+            <div className="archiveRailSpacer" />
+            <div className="archiveRailFuture" title={language === 'zh' ? '未来可在这里接入新模块' : 'New modules can be added here later'}>
+              <WandSparkles size={15} />
+              <span>{language === 'zh' ? '扩展模块' : 'EXTENSIONS'}</span>
+              <b>+</b>
+            </div>
+            <div className="archiveRailGroup archiveRailAccountGroup">
+              <span className="archiveRailGroupLabel">{language === 'zh' ? '账户' : 'ACCOUNT'}</span>
+              <a className="archiveRailItem" href={personalCommunityUrl}><Crown size={17} /><span>{t.navPersonalCommunity}</span></a>
+              <button className="archiveRailItem archiveRailMember" type="button" onClick={() => handleOpenAccount('overview')} aria-label={t.account}>
+                <UserCircle size={17} /><span>{t.account}</span>
+              </button>
+            </div>
+          </aside>
+
+          <div className="archiveFeed">
+            <div className="archiveCatalogLine">
+              <span className="archiveCatalogLabel">{t.sectionEyebrow}</span>
+              <span className="archiveCatalogState">{category === 'All' ? t.all : localizeLabel(category, language, styleLibrary)} · {filteredCases.length}</span>
+              <button className="archiveFilterLauncher" type="button" onClick={() => setFilterOpen(true)} aria-expanded={filterOpen}>
+                <Search size={16} />
+                <span>{query || t.search}</span>
+                <span className="archiveFilterHint">{t.category} / {t.style} / {t.scene}</span>
+              </button>
+            </div>
+
+            <div className="resultBar">
+              <span>{language === 'zh' ? `${filteredCases.length} ${t.matching}` : `${filteredCases.length} ${t.matching}`}</span>
+              <a href={repoUrl} target="_blank" rel="noreferrer">
+                {t.openGithub}
+                <ArrowUpRight size={16} />
+              </a>
+            </div>
+
+            <div className="caseGrid">
+              {visibleCases.map((caseItem) => (
+                <PromptCard
+                  caseItem={caseItem}
+                  copied={copiedId === `case-${caseItem.id}`}
+                  favorited={favoriteCaseIds.has(caseItem.id)}
+                  favoriteBusy={favoriteBusyId === caseItem.id}
+                  language={language}
+                  onCopy={copyPrompt}
+                  onOpen={(item) => setPreview({ type: 'case', item })}
+                  onGenerate={(item) => {
+                    setPreview({ type: 'case', item });
+                    if (!session?.access_token) openAuth();
+                  }}
+                  onToggleFavorite={handleToggleFavorite}
+                  styleLibrary={styleLibrary}
+                  key={caseItem.id}
+                />
               ))}
             </div>
-          </div>
-          <div>
-            <strong>{t.style}</strong>
-            <div className="filterRow">
-              <FilterPill active={style === 'All'} onClick={() => setStyle('All')}>{t.all}</FilterPill>
-              {orderedStyles.map((item) => (
-                <FilterPill key={item} active={style === item} onClick={() => setStyle(item)}>
-                  {localizeLabel(item, language, styleLibrary)}
-                </FilterPill>
-              ))}
-            </div>
-          </div>
-          <div>
-            <strong>{t.scene}</strong>
-            <div className="filterRow">
-              <FilterPill active={scene === 'All'} onClick={() => setScene('All')}>{t.all}</FilterPill>
-              {orderedScenes.map((item) => (
-                <FilterPill key={item} active={scene === item} onClick={() => setScene(item)}>
-                  {localizeLabel(item, language, styleLibrary)}
-                </FilterPill>
-              ))}
-            </div>
+
+            {filteredCases.length > visibleCases.length && (
+              <p className="limitNote">
+                {t.limit(visibleCases.length)}
+              </p>
+            )}
           </div>
         </div>
 
-        <div className="resultBar">
-          <span>{language === 'zh' ? `${filteredCases.length} ${t.matching}` : `${filteredCases.length} ${t.matching}`}</span>
-          <a href={repoUrl} target="_blank" rel="noreferrer">
-            {t.openGithub}
-            <ArrowUpRight size={16} />
-          </a>
-        </div>
-
-        <div className="caseGrid">
-          {visibleCases.map((caseItem) => (
-            <PromptCard
-              caseItem={caseItem}
-              copied={copiedId === `case-${caseItem.id}`}
-              favorited={favoriteCaseIds.has(caseItem.id)}
-              favoriteBusy={favoriteBusyId === caseItem.id}
-              language={language}
-              onCopy={copyPrompt}
-              onOpen={(item) => setPreview({ type: 'case', item })}
-              onGenerate={(item) => {
-                setPreview({ type: 'case', item });
-                if (!session?.access_token) openAuth();
-              }}
-              onToggleFavorite={handleToggleFavorite}
-              styleLibrary={styleLibrary}
-              key={caseItem.id}
-            />
-          ))}
-        </div>
-
-        {filteredCases.length > visibleCases.length && (
-          <p className="limitNote">
-            {t.limit(visibleCases.length)}
-          </p>
-        )}
+        {filterOpen ? (
+          <div className="filterDrawerBackdrop" role="presentation" onMouseDown={() => setFilterOpen(false)}>
+            <aside className="filterDrawer" role="dialog" aria-modal="true" aria-label={t.search} onMouseDown={(event) => event.stopPropagation()}>
+              <div className="filterDrawerHead">
+                <div><span className="eyebrow">{t.sectionEyebrow}</span><h3>{t.search}</h3></div>
+                <button className="iconButton" type="button" onClick={() => setFilterOpen(false)} aria-label={t.close}><X size={18} /></button>
+              </div>
+              <div className="discoverySearch">
+                <Search size={19} aria-hidden="true" />
+                <input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t.search} aria-label={t.search} />
+                {query ? <button className="clearSearch" type="button" onClick={() => setQuery('')} aria-label={t.clearSearch}><X size={17} /></button> : null}
+              </div>
+              <div className="filterDrawerGroup"><strong>{t.category}</strong><div className="categoryRail" aria-label={t.category}>
+                <button className={cx('categoryTile', category === 'All' && 'active')} type="button" onClick={() => setCategory('All')}><span>{t.all}</span></button>
+                {orderedCategories.map((item) => <button className={cx('categoryTile', category === item && 'active')} type="button" onClick={() => setCategory(item)} key={item}><span>{localizeLabel(item, language, styleLibrary)}</span></button>)}
+              </div></div>
+              <div className="filterDrawerGroup"><strong>{t.style}</strong><div className="filterRow"><FilterPill active={style === 'All'} onClick={() => setStyle('All')}>{t.all}</FilterPill>{orderedStyles.map((item) => <FilterPill key={item} active={style === item} onClick={() => setStyle(item)}>{localizeLabel(item, language, styleLibrary)}</FilterPill>)}</div></div>
+              <div className="filterDrawerGroup"><strong>{t.scene}</strong><div className="filterRow"><FilterPill active={scene === 'All'} onClick={() => setScene('All')}>{t.all}</FilterPill>{orderedScenes.map((item) => <FilterPill key={item} active={scene === item} onClick={() => setScene(item)}>{localizeLabel(item, language, styleLibrary)}</FilterPill>)}</div></div>
+              <button className="filterDrawerDone" type="button" onClick={() => setFilterOpen(false)}>{t.done}</button>
+            </aside>
+          </div>
+        ) : null}
       </section>
 
       <TemplateSection
@@ -3518,6 +4946,8 @@ function App() {
       />
 
       <SkillSection language={language} repoUrl={repoUrl} />
+        </>
+      )}
       <PreviewDialog
         preview={preview}
         language={language}
@@ -3563,14 +4993,18 @@ function App() {
           setBillingOpen(true);
         }}
       />
-      <AdminPanel
-        open={adminOpen}
-        language={language}
-        session={session}
-        casesById={casesById}
-        onClose={() => setAdminOpen(false)}
-        onOpenCase={handleOpenCaseFromAdmin}
-      />
+      <AdminPanelBoundary language={language} onClose={() => setAdminOpen(false)}>
+        <AdminPanel
+          open={adminOpen}
+          language={language}
+          session={session}
+          casesById={casesById}
+          homepageSettings={homepageSettings}
+          onHomepageSettingsSaved={setHomepageSettings}
+          onClose={() => setAdminOpen(false)}
+          onOpenCase={handleOpenCaseFromAdmin}
+        />
+      </AdminPanelBoundary>
       <BillingPanel
         open={billingOpen}
         language={language}

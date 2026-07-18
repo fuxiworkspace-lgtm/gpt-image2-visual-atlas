@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 实验室 · 房语 — Aing</title>
+<style>
+/* ============================================================
+   提示词库子页
+   主题色沿用 about.html：黑 + 米白 + 琥珀点缀
+   网格布局 · 筛选条 · 一键复制
+   ============================================================ */
+:root {
+  --bg: #faf8f5;
+  --bg-deep: #f0ece5;
+  --fg: #1a1612;
+  --fg-soft: #5a5247;
+  --fg-muted: #a09a8c;
+  --amber: #d4913e;
+  --amber-glow: rgba(212, 145, 62, 0.18);
+  --hairline: rgba(26, 22, 18, 0.12);
+  --serif: "Songti SC", "Noto Serif SC", "Source Han Serif SC", Georgia, serif;
+  --sans: "PingFang SC", "Noto Sans SC", "Helvetica Neue", sans-serif;
+  --mono: "IBM Plex Mono", "SF Mono", "Menlo", monospace;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--serif);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  line-height: 1.7;
+}
+::selection { background: var(--fg); color: var(--bg); }
+
+/* 纸纹噪点 */
+body::before {
+  content:""; position:fixed; inset:0; z-index:9999; pointer-events:none; opacity:0.22;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.03 0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* 环境光晕 */
+#ambientGlow {
+  position:fixed; pointer-events:none; z-index:2;
+  width:600px; height:600px;
+  border-radius:50%;
+  background:radial-gradient(circle, var(--amber-glow) 0%, transparent 70%);
+  transform:translate(-50%, -50%);
+  opacity:0; transition:opacity 0.6s;
+  mix-blend-mode:multiply;
+}
+body:hover #ambientGlow { opacity:1; }
+
+/* 顶部导航 */
+#topNav {
+  position:fixed; top:0; left:0; right:0; z-index:9999;
+  display:flex; justify-content:space-between; align-items:center;
+  padding:14px 24px;
+  background:rgba(250, 248, 245, 0.85);
+  backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--hairline);
+  font-family:var(--mono); font-size:10px; letter-spacing:0.25em;
+  text-transform:uppercase;
+  margin-top:2px;
+}
+#topNav .nav-mark {
+  font-family:var(--serif); font-weight:900; font-size:14px;
+  color:var(--fg); letter-spacing:0.4em; text-transform:none;
+}
+#topNav .nav-links { display:flex; gap:28px; }
+#topNav .nav-links a {
+  text-decoration:none; color:var(--fg-muted);
+  transition:color 0.35s cubic-bezier(.22,1,.36,1);
+  position:relative;
+}
+#topNav .nav-links a:hover { color:var(--amber); }
+#topNav .nav-links a.active { color:var(--fg); }
+#topNav .nav-links a.active::after {
+  content:""; position:absolute; left:0; right:0; bottom:-6px;
+  height:1px; background:var(--amber);
+}
+@media (max-width:640px) {
+  #topNav { padding:10px 16px; font-size:9px; }
+  #topNav .nav-links { gap:18px; }
+  #topNav .nav-mark { font-size:12px; letter-spacing:0.3em; }
+}
+
+#lastUpdated {
+  font-family:var(--mono); font-size:10px; letter-spacing:0.2em;
+  color:var(--fg-muted); text-transform:uppercase;
+  display:flex; align-items:center; gap:8px;
+}
+#lastUpdated::before {
+  content:""; width:5px; height:5px; border-radius:50%;
+  background:var(--amber); box-shadow:0 0 8px var(--amber-glow);
+  animation:dotPulse 2.6s ease-in-out infinite;
+}
+@keyframes dotPulse {
+  0%,100% { opacity:0.55; transform:scale(1); }
+  50%     { opacity:1;    transform:scale(1.35); }
+}
+
+/* 滚动进度线 */
+#progress {
+  position:fixed; top:0; left:0; height:2px; width:0%;
+  background:var(--amber); z-index:10000;
+  transition: width 0.08s linear;
+}
+
+/* ========== 入场 ========== */
+.reveal {
+  opacity:0; transform:translateY(20px);
+  transition:opacity 1.2s ease, transform 1.2s ease;
+}
+.reveal.in { opacity:1; transform:none; }
+.reveal.d1 { transition-delay:0.15s; }
+.reveal.d2 { transition-delay:0.3s; }
+.reveal.d3 { transition-delay:0.45s; }
+
+/* ========== Hero ========== */
+.hero {
+  min-height:70vh;
+  display:grid;
+  grid-template-columns:1.2fr 1fr;
+  gap:6vw;
+  align-items:center;
+  padding:18vh 8vw 8vh;
+  position:relative; z-index:1;
+}
+.hero-left {}
+.hero-right {
+  position:relative;
+  height:400px;
+}
+.hero-label {
+  font-family:var(--mono); font-size:10px; letter-spacing:0.4em;
+  color:var(--amber); margin-bottom:24px; text-transform:uppercase;
+  display:inline-block;
+  border:1px solid var(--amber);
+  padding:5px 12px; border-radius:999px;
+}
+.hero-title {
+  font-family:var(--serif); font-weight:900;
+  font-size:clamp(40px, 6.5vw, 76px); line-height:1.05;
+  letter-spacing:-0.025em; margin-bottom:24px;
+}
+.hero-sub {
+  font-size:clamp(15px, 1.6vw, 18px); color:var(--fg-soft);
+  max-width:560px; line-height:1.8; margin-bottom:32px;
+}
+.hero-cta {
+  display:inline-block; padding:12px 28px;
+  background:var(--fg); color:var(--bg);
+  font-family:var(--mono); font-size:11px; letter-spacing:0.3em;
+  text-transform:uppercase; text-decoration:none;
+  border-radius:4px;
+  transition:all 0.35s cubic-bezier(.22,1,.36,1);
+  margin-bottom:32px;
+}
+.hero-cta:hover { background:var(--amber); }
+.hero-stats {
+  display:flex; gap:18px; flex-wrap:wrap;
+}
+.hero-stat {
+  font-family:var(--mono); font-size:10px; letter-spacing:0.2em;
+  color:var(--fg-soft);
+  border:1px solid var(--hairline);
+  padding:8px 16px; border-radius:999px;
+  text-transform:uppercase;
+}
+.hero-stat strong {
+  color:var(--amber); font-weight:700; margin-right:6px;
+}
+
+/* Hero 右侧 collage — 3 张缩略图叠放 */
+.collage {
+  position:relative; width:100%; height:100%;
+}
+.collage img {
+  position:absolute;
+  width:65%; height:75%;
+  object-fit:cover;
+  border:2px solid var(--bg);
+  border-radius:6px;
+  box-shadow:0 12px 30px rgba(0,0,0,0.15);
+}
+.collage .c1 { top:5%;  left:30%;  transform:rotate(-6deg); z-index:3; }
+.collage .c2 { top:18%; left:0%;   transform:rotate(4deg);  z-index:2; }
+.collage .c3 { top:30%; left:45%;  transform:rotate(8deg);  z-index:1; }
+
+@media (max-width:768px) {
+  .hero { grid-template-columns:1fr; min-height:auto; padding:14vh 6vw 6vh; }
+  .hero-right { display:none; }
+}
+
+/* tagline 区（紧贴筛选条上方） */
+.tagline-strip {
+  text-align:center;
+  padding:32px 8vw 12px;
+  font-family:var(--mono); font-size:10px; letter-spacing:0.4em;
+  color:var(--fg-muted); text-transform:uppercase;
+}
+.tagline-strip span { color:var(--amber); }
+
+/* ========== 筛选条 ========== */
+.filter-bar {
+  position:sticky; top:50px; z-index:50;
+  background:rgba(250,248,245,0.92);
+  backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+  border-top:1px solid var(--hairline);
+  border-bottom:1px solid var(--hairline);
+  padding:18px 8vw;
+  display:flex; gap:8px; flex-wrap:wrap; align-items:center;
+  font-family:var(--mono); font-size:10px; letter-spacing:0.25em;
+  text-transform:uppercase;
+}
+.filter-label {
+  color:var(--fg-muted); margin-right:16px;
+}
+.filter-chip {
+  background:none; border:1px solid var(--hairline);
+  padding:6px 16px; border-radius:999px;
+  font:inherit; color:var(--fg-soft); cursor:pointer;
+  transition:all 0.35s cubic-bezier(.22,1,.36,1);
+}
+.filter-chip:hover { border-color:var(--amber); color:var(--amber); }
+.filter-chip.active {
+  background:var(--amber); color:#fff; border-color:var(--amber);
+}
+@media (max-width:640px) {
+  .filter-bar { top:46px; padding:14px 6vw; font-size:9px; gap:6px; }
+  .filter-chip { padding:5px 12px; }
+  .filter-label { display:none; }
+}
+
+/* ========== 网格 ========== */
+.grid-wrap {
+  max-width:1100px; margin:0 auto;
+  padding:8vh 8vw 14vh;
+  position:relative; z-index:1;
+}
+.grid {
+  display:grid;
+  grid-template-columns:repeat(3, 1fr);
+  gap:6vw;
+}
+@media (max-width:900px) {
+  .grid { grid-template-columns:repeat(2, 1fr); gap:5vw; }
+}
+@media (max-width:560px) {
+  .grid { grid-template-columns:1fr; gap:5vh; }
+}
+
+/* ========== 卡片 ========== */
+.p-card {
+  background:var(--bg);
+  border:1px solid var(--hairline);
+  border-radius:6px;
+  overflow:hidden;
+  display:flex; flex-direction:column;
+  transition:all 0.35s cubic-bezier(.22,1,.36,1);
+}
+.p-card:hover {
+  border-color:var(--amber);
+  transform:translateY(-4px);
+  box-shadow:0 12px 36px rgba(212,145,62,0.12);
+}
+.p-card .pc-thumb {
+  width:100%; height:260px;
+  background:var(--bg-deep);
+  display:flex; align-items:center; justify-content:center;
+  overflow:hidden; position:relative;
+}
+.p-card .pc-thumb img {
+  width:100%; height:100%; object-fit:cover; object-position:center 28%;
+  display:block;
+}
+/* 角标：白底小标签，贴顶左（仿 Case Nº01） */
+.p-card .pc-case-badge {
+  position:absolute; top:12px; left:12px; z-index:2;
+  font-family:var(--mono); font-size:10px; letter-spacing:0.15em;
+  background:var(--bg); color:var(--fg);
+  padding:4px 10px; border-radius:3px;
+  text-transform:none;
+}
+.p-card .pc-body {
+  padding:18px 20px 16px;
+  display:flex; flex-direction:column;
+  flex:1;
+}
+.p-card .pc-num {
+  font-family:var(--mono); font-size:10px; letter-spacing:0.3em;
+  color:var(--amber); margin-bottom:6px;
+}
+.p-card .pc-title {
+  font-family:var(--serif); font-weight:700;
+  font-size:18px; line-height:1.35; margin-bottom:8px;
+  color:var(--fg);
+}
+/* 类型 tag 栏 — 仿参考站的圆角小标签 */
+.p-card .pc-tags {
+  display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px;
+}
+.p-card .pc-tag {
+  font-family:var(--sans); font-size:11px; letter-spacing:0.05em;
+  padding:3px 10px; border-radius:4px;
+  background:var(--bg-deep); color:var(--fg-soft);
+}
+.p-card .pc-kind {
+  display:none;   /* 改成 tag 形式后，原 kind 隐藏 */
+}
+.p-card .pc-meta {
+  font-family:var(--mono); font-size:10px; letter-spacing:0.15em;
+  color:var(--fg-muted); margin-bottom:10px;
+}
+.p-card .pc-meta strong { color:var(--amber); font-weight:600; }
+.p-card .pc-preview {
+  font-family:var(--serif); font-size:13px; line-height:1.6;
+  color:var(--fg-soft);
+  display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical;
+  overflow:hidden;
+  margin-bottom:14px;
+  flex:1;
+}
+.p-card .pc-actions {
+  display:flex; justify-content:space-between; align-items:center;
+  border-top:1px dashed var(--hairline); padding-top:14px;
+}
+.p-card .pc-copy {
+  font-family:var(--mono); font-size:10px; letter-spacing:0.25em;
+  background:none; border:1px solid var(--fg);
+  padding:7px 14px; color:var(--fg);
+  text-transform:uppercase; cursor:pointer;
+  transition:all 0.35s cubic-bezier(.22,1,.36,1);
+}
+.p-card .pc-copy:hover { background:var(--fg); color:var(--bg); }
+.p-card .pc-copy.copied { border-color:var(--amber); color:var(--amber); }
+.p-card .pc-open {
+  font-family:var(--mono); font-size:10px; letter-spacing:0.2em;
+  color:var(--fg-muted); text-decoration:none;
+  text-transform:uppercase;
+  transition:color 0.35s;
+}
+.p-card .pc-open:hover { color:var(--amber); }
+.prompt-modal { position:fixed; inset:0; z-index:20000; display:none; align-items:center; justify-content:center; padding:5vh 6vw; background:rgba(25,21,16,.72); backdrop-filter:blur(8px); }
+.prompt-modal.open { display:flex; }
+.prompt-modal-card { width:min(880px,100%); max-height:88vh; overflow:auto; background:var(--bg); border:1px solid var(--hairline); box-shadow:0 24px 80px rgba(0,0,0,.25); }
+.prompt-modal-head { display:flex; justify-content:space-between; align-items:start; gap:24px; padding:28px 32px 22px; border-bottom:1px solid var(--hairline); }
+.prompt-modal-title { font:700 clamp(24px,3vw,38px)/1.2 var(--serif); color:var(--fg); }
+.prompt-modal-close { border:0; background:none; color:var(--fg-muted); font:28px var(--mono); cursor:pointer; }
+.prompt-modal-body { padding:28px 32px 34px; }
+.prompt-modal-meta { color:var(--amber); font:10px var(--mono); letter-spacing:.22em; margin-bottom:18px; }
+.prompt-modal-text { white-space:pre-wrap; color:var(--fg-soft); font:15px/1.9 var(--sans); background:var(--bg-deep); border:1px solid var(--hairline); padding:22px; }
+.prompt-modal-copy { margin-top:20px; padding:10px 18px; border:1px solid var(--fg); background:none; color:var(--fg); font:11px var(--mono); letter-spacing:.2em; cursor:pointer; }
+.prompt-modal-gallery { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:22px; }
+.prompt-modal-gallery:empty { display:none; }
+.prompt-modal-gallery img { width:100%; aspect-ratio:1; object-fit:cover; border:1px solid var(--hairline); cursor:zoom-in; background:var(--bg-deep); }
+@media (max-width:640px) { .prompt-modal { padding:3vh 4vw; } .prompt-modal-head,.prompt-modal-body { padding-left:20px; padding-right:20px; } }
+
+/* ========== 隐藏（被筛选掉） ========== */
+.p-card.hidden { display:none; }
+
+/* ========== FOOTER ========== */
+footer {
+  padding:8vh 8vw 12vh;
+  border-top:1px solid var(--hairline);
+  text-align:center;
+  position:relative; z-index:1;
+}
+footer .fine {
+  font-family:var(--mono); font-size:10px; letter-spacing:0.2em;
+  color:var(--fg-muted);
+}
+.back-home {
+  display:inline-block; margin-bottom:20px;
+  font-family:var(--mono); font-size:10px; letter-spacing:0.3em;
+  color:var(--fg-muted); text-decoration:none; text-transform:uppercase;
+  transition:color 0.35s;
+}
+.back-home:hover { color:var(--amber); }
+
+/* ========== 页面切换动画 ========== */
+body {
+  animation: pageEnter 0.55s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes pageEnter {
+  from { opacity:0; transform:translateY(24px); }
+  to   { opacity:1; transform:none; }
+}
+body.page-leaving {
+  animation: pageLeave 0.32s cubic-bezier(.4,0,.6,1) both;
+  pointer-events:none;
+}
+@keyframes pageLeave {
+  from { opacity:1; transform:none; }
+  to   { opacity:0; transform:translateY(-16px); }
+}
+
+/* ========== reduced-motion ========== */
+@media (prefers-reduced-motion:reduce) {
+  .reveal { opacity:1; transform:none; transition:none; }
+  html { scroll-behavior:auto; }
+}
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+<div id="ambientGlow"></div>
+<nav id="topNav" aria-label="主导航">
+  <span class="nav-mark">房  语</span>
+  <div class="nav-links">
+    <a href="index.html">主页</a>
+    <a href="about.html">关于</a>
+    <a href="prompts.html" class="active">AI 实验室</a>
+    <a href="works.html">作品</a>
+  </div>
+  <div id="lastUpdated">UPDATED · <span id="lastUpdatedDays">—</span></div>
+</nav>
+
+<!-- ========== HERO ========== -->
+<section class="hero">
+  <div class="hero-left">
+    <span class="hero-label reveal">AI LAB · WORKFLOW GALLERY</span>
+    <h1 class="hero-title reveal d1">把 AI 放进真实工作里。</h1>
+    <p class="hero-sub reveal d2">一组从日常实践中提炼出来的提示词与工作流：内容研究、运营分析、知识库、Agent 和 AI 原生创作。复制、改写、继续实验。</p>
+    <a class="hero-cta reveal d3" href="#grid">浏览全部 →</a>
+    <div class="hero-stats reveal d3">
+      <span class="hero-stat"><strong>6</strong>WORKFLOWS</span>
+      <span class="hero-stat"><strong>6</strong>SCENARIOS</span>
+      <span class="hero-stat"><strong>1</strong>BUILDER</span>
+    </div>
+  </div>
+  <div class="hero-right reveal d2">
+    <div class="collage">
+      <img class="c1" src="assets/headshot-wsj.jpg" alt="职业头像" onerror="this.style.background='var(--bg-deep)';this.removeAttribute('src');">
+      <img class="c2" src="assets/headshot-wsj.jpg" alt="示例 1" onerror="this.style.background='var(--bg-deep)';this.removeAttribute('src');">
+      <img class="c2" src="assets/headshot-wsj.jpg" alt="示例 2" onerror="this.style.background='var(--bg-deep)';this.removeAttribute('src');">
+    </div>
+  </div>
+</section>
+
+<!-- ========== tagline 区 ========== -->
+<div class="tagline-strip">OBSERVE · BUILD · <span>REMIX</span></div>
+
+<!-- ========== 筛选条 ========== -->
+<div class="filter-bar">
+  <span class="filter-label">FILTER · 类型</span>
+  <button class="filter-chip active" data-filter="all">全部</button>
+  <button class="filter-chip" data-filter="ROLE">角色</button>
+  <button class="filter-chip" data-filter="CHAIN-OF-THOUGHT">推理</button>
+  <button class="filter-chip" data-filter="REWRITE">改写</button>
+  <button class="filter-chip" data-filter="STRUCTURED">结构化</button>
+  <button class="filter-chip" data-filter="SUMMARIZE">长文</button>
+  <button class="filter-chip" data-filter="HEADSHOT">图像</button>
+</div>
+
+<!-- ========== 网格 ========== -->
+<main class="grid-wrap">
+  <div class="grid" id="grid">
+
+    <article class="p-card reveal in" data-kind="HEADSHOT">
+      <div class="pc-thumb">
+        <span class="pc-case-badge">Case Nº 01</span>
+        <img src="assets/headshot-wsj.jpg" alt="职业头像 · 华尔街美式">
+      </div>
+      <div class="pc-body">
+        <span class="pc-num">Nº 01</span>
+        <h3 class="pc-title">职业头像 · 华尔街美式</h3>
+        <div class="pc-tags"><span class="pc-tag">Photography</span><span class="pc-tag">Executive</span></div>
+        <p class="pc-meta"><strong>PHOTOGRAPHY · REALISM</strong> · @AingFang</p>
+        <p class="pc-preview">Corporate executive headshot, Asian entrepreneur, professional business portrait, navy suit, white dress shirt...</p>
+        <div class="pc-actions">
+          <button class="pc-copy" type="button">复制</button>
+          <a class="pc-open" href="#prompt-1">查看 →</a>
+        </div>
+      </div>
+    </article>
+
+    <article class="p-card reveal in" data-kind="ROLE">
+      <div class="pc-thumb">
+        <span class="pc-case-badge">Case Nº 02</span>
+        <div style="color:var(--fg-muted);font-size:9px;letter-spacing:0.3em;">[ 缩略图占位 ]</div>
+      </div>
+      <div class="pc-body">
+        <span class="pc-num">Nº 02</span>
+        <h3 class="pc-title">角色设定 · 通用专家</h3>
+        <div class="pc-tags"><span class="pc-tag">System</span><span class="pc-tag">Consulting</span></div>
+        <p class="pc-meta"><strong>ROLE · SYSTEM</strong> · @AingFang</p>
+        <p class="pc-preview">让 AI 扮演一位资深 XX 专家，先理解你的问题背景，再分点给出可执行的建议...</p>
+        <div class="pc-actions">
+          <button class="pc-copy" type="button">复制</button>
+          <a class="pc-open" href="#prompt-2">查看 →</a>
+        </div>
+      </div>
+    </article>
+
+    <article class="p-card reveal in" data-kind="CHAIN-OF-THOUGHT">
+      <div class="pc-thumb">
+        <span class="pc-case-badge">Case Nº 03</span>
+        <div style="color:var(--fg-muted);font-size:9px;letter-spacing:0.3em;">[ 缩略图占位 ]</div>
+      </div>
+      <div class="pc-body">
+        <span class="pc-num">Nº 03</span>
+        <h3 class="pc-title">思路链 · CoT</h3>
+        <div class="pc-tags"><span class="pc-tag">Reasoning</span><span class="pc-tag">Logic</span></div>
+        <p class="pc-meta"><strong>CHAIN-OF-THOUGHT</strong> · @AingFang</p>
+        <p class="pc-preview">强制 AI 一步步想，先列步骤再给结论。适用于：复杂问题 / 数学 / 逻辑题...</p>
+        <div class="pc-actions">
+          <button class="pc-copy" type="button">复制</button>
+          <a class="pc-open" href="#prompt-3">查看 →</a>
+        </div>
+      </div>
+    </article>
+
+    <article class="p-card reveal in" data-kind="REWRITE">
+      <div class="pc-thumb">
+        <span class="pc-case-badge">Case Nº 04</span>
+        <div style="color:var(--fg-muted);font-size:9px;letter-spacing:0.3em;">[ 缩略图占位 ]</div>
+      </div>
+      <div class="pc-body">
+        <span class="pc-num">Nº 04</span>
+        <h3 class="pc-title">提示词润色 · 重写</h3>
+        <div class="pc-tags"><span class="pc-tag">Editing</span><span class="pc-tag">Style</span></div>
+        <p class="pc-meta"><strong>REWRITE · EDITING</strong> · @AingFang</p>
+        <p class="pc-preview">把一段写得平淡的文字改得更有节奏、更有画面感。可以指定语气：克制 / 锐利 / 温暖...</p>
+        <div class="pc-actions">
+          <button class="pc-copy" type="button">复制</button>
+          <a class="pc-open" href="#prompt-4">查看 →</a>
+        </div>
+      </div>
+    </article>
+
+    <article class="p-card reveal in" data-kind="STRUCTURED">
+      <div class="pc-thumb">
+        <span class="pc-case-badge">Case Nº 05</span>
+        <div style="color:var(--fg-muted);font-size:9px;letter-spacing:0.3em;">[ 缩略图占位 ]</div>
+      </div>
+      <div class="pc-body">
+        <span class="pc-num">Nº 05</span>
+        <h3 class="pc-title">信息抽取 · JSON</h3>
+        <div class="pc-tags"><span class="pc-tag">Extraction</span><span class="pc-tag">Data</span></div>
+        <p class="pc-meta"><strong>STRUCTURED · EXTRACTION</strong> · @AingFang</p>
+        <p class="pc-preview">从一段非结构化文字里抽出指定字段，按 JSON 输出。适用于：合同解析 / 简历筛选...</p>
+        <div class="pc-actions">
+          <button class="pc-copy" type="button">复制</button>
+          <a class="pc-open" href="#prompt-5">查看 →</a>
+        </div>
+      </div>
+    </article>
+
+    <article class="p-card reveal in" data-kind="SUMMARIZE">
+      <div class="pc-thumb">
+        <span class="pc-case-badge">Case Nº 06</span>
+        <div style="color:var(--fg-muted);font-size:9px;letter-spacing:0.3em;">[ 缩略图占位 ]</div>
+      </div>
+      <div class="pc-body">
+        <span class="pc-num">Nº 06</span>
+        <h3 class="pc-title">长文摘要 · 滚动</h3>
+        <div class="pc-tags"><span class="pc-tag">Long-form</span><span class="pc-tag">Summary</span></div>
+        <p class="pc-meta"><strong>SUMMARIZE · LONG-FORM</strong> · @AingFang</p>
+        <p class="pc-preview">超长上下文（> 50k 字）分段总结，最后给出一份"可以贴进任何地方"的压缩版...</p>
+        <div class="pc-actions">
+          <button class="pc-copy" type="button">复制</button>
+          <a class="pc-open" href="#prompt-6">查看 →</a>
+        </div>
+      </div>
+    </article>
+
+    <article class="p-card reveal in" data-kind="IMAGE" data-gallery="assets/prompts/app-icon-generator/01.jpg|assets/prompts/app-icon-generator/02.jpg|assets/prompts/app-icon-generator/03.jpg|assets/prompts/app-icon-generator/04.png|assets/prompts/app-icon-generator/05.png|assets/prompts/app-icon-generator/06.png">
+      <div class="pc-thumb"><span class="pc-case-badge">Case Nº 07</span><img src="assets/prompts/app-icon-generator/01.jpg" alt="App Icon Generator 粉红色小狗示例"></div>
+      <div class="pc-body"><span class="pc-num">Nº 07</span><h3 class="pc-title">App Icon Generator</h3><div class="pc-tags"><span class="pc-tag">App Icon</span><span class="pc-tag">macOS</span></div><p class="pc-meta"><strong>IMAGE · SYSTEM</strong> · @AingFang</p><p class="pc-preview">生成完整的 macOS App Store 风格图标提示词系统，支持品牌、行业、平台、风格和图标原型推导。</p><div class="pc-actions"><button class="pc-copy" type="button">复制</button><a class="pc-open" href="#prompt-7">查看 →</a></div></div>
+    </article>
+  </div>
+</main>
+
+<div class="prompt-modal" id="promptModal" role="dialog" aria-modal="true" aria-label="完整提示词">
+  <div class="prompt-modal-card">
+    <div class="prompt-modal-head"><h2 class="prompt-modal-title" id="promptModalTitle">完整提示词</h2><button class="prompt-modal-close" id="promptModalClose" aria-label="关闭">×</button></div>
+    <div class="prompt-modal-body"><div class="prompt-modal-meta" id="promptModalMeta"></div><div class="prompt-modal-gallery" id="promptModalGallery"></div><div class="prompt-modal-text" id="promptModalText"></div><button class="prompt-modal-copy" id="promptModalCopy">复制完整提示词</button></div>
+  </div>
+</div>
+
+<!-- ========== FOOTER ========== -->
+<footer>
+  <a href="about.html" class="back-home">← 回到关于</a>
+  <p class="fine">© 2026 — 房语 Aing · AI 实验室</p>
+</footer>
+
+<script>
+/* ========== 页面切换：拦截导航链接 · 触发 leave 动画 ========== */
+(function () {
+  const isInterPageLink = (a) => {
+    if (!a || a.target === "_blank") return false;
+    if (a.hasAttribute("download")) return false;
+    if (a.pathname === location.pathname && !a.hash) return false;
+    if (a.pathname.endsWith(".html") && a.pathname !== location.pathname) return true;
+    return false;
+  };
+  document.addEventListener("click", (e) => {
+    const a = e.target.closest("a");
+    if (!a || !isInterPageLink(a)) return;
+    e.preventDefault();
+    document.body.classList.add("page-leaving");
+    setTimeout(() => { location.href = a.href; }, 280);
+  });
+})();
+
+/* ========== 进度线 ========== */
+const p = document.getElementById("progress");
+window.addEventListener("scroll", () => {
+  const h = document.documentElement, max = h.scrollHeight - h.clientHeight;
+  p.style.width = (max > 0 ? (h.scrollTop / max) * 100 : 0) + "%";
+}, { passive: true });
+
+/* ========== 最近更新 ========== */
+(function () {
+  const start = new Date(2026, 5, 22);
+  const today = new Date();
+  const days = Math.max(0, Math.floor((today - start) / 86400000));
+  document.getElementById("lastUpdatedDays").textContent =
+    days === 0 ? "TODAY" : days + "D AGO";
+})();
+
+/* ========== 入场 ========== */
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
+}, { threshold: 0, rootMargin: "0px 0px -50px 0px" });
+document.querySelectorAll(".reveal").forEach(el => io.observe(el));
+
+/* ========== 环境光晕 ========== */
+const glow = document.getElementById("ambientGlow");
+window.addEventListener("mousemove", (e) => {
+  glow.style.left = e.clientX + "px";
+  glow.style.top = e.clientY + "px";
+}, { passive: true });
+
+/* ========== 筛选 ========== */
+document.querySelectorAll(".filter-chip").forEach(chip => {
+  chip.addEventListener("click", () => {
+    document.querySelectorAll(".filter-chip").forEach(c => c.classList.remove("active"));
+    chip.classList.add("active");
+    const f = chip.dataset.filter;
+    document.querySelectorAll(".p-card").forEach(card => {
+      if (f === "all" || card.dataset.kind === f) card.classList.remove("hidden");
+      else card.classList.add("hidden");
+    });
+  });
+});
+
+/* ========== 复制按钮（动态） ========== */
+function loadDB() {
+  try {
+    const raw = localStorage.getItem("aing_cms_db_v1");
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return { prompts: [] };
+}
+const STATIC_PROMPT_BODIES = {
+  "职业头像 · 华尔街美式": `Corporate executive headshot, Asian entrepreneur, professional business portrait, navy suit, white dress shirt, confident natural smile, looking at camera, dark gray gradient background, luxury studio lighting, high-end corporate branding style, executive portrait photography, LinkedIn premium headshot, photorealistic, ultra detailed skin texture, sharp eyes, 85mm lens, shallow depth of field, magazine quality, professional retouching, symmetrical composition`,
+  "角色设定 · 通用专家": `你是一位资深的「{领域}」专家。请按以下步骤回答我的问题：\n\n1. 先用 2-3 句话理解我的问题背景（如果不清楚，主动追问）\n2. 给出 3 条核心建议，每条不超过 2 句话\n3. 最后列 1-2 个我可能没想到、但你可能需要知道的细节\n\n约束：不要给百科全书式的回答；不要回避不确定性；全程用中文。\n\n现在请听我的问题：`,
+  "思路链 · CoT": `在给出最终答案之前，请先按下面的格式一步一步想：\n\n【我的理解】\n（用 1-2 句话复述题目）\n\n【拆分步骤】\n1. 第一步……\n2. ……\n\n【最终答案】\n（在以上推理之后给出）\n\n题目：`,
+  "提示词润色 · 重写": `请把下面这段文字改写得更生动。请先告诉我你会选哪种语气（克制 / 锐利 / 温暖 / 学术），然后再改写。\n\n原文字：\n---\n{在这里粘贴}\n---\n\n约束：保留原意，不要加新观点；长度不要超过原文的 1.5 倍。`,
+  "信息抽取 · JSON": `请从下面这段文字里，按指定 schema 抽取信息，按 JSON 输出。\n\n【待抽取的文字】\n---\n{在这里粘贴}\n---\n\n【输出 schema】\n{\n  "people": [],\n  "organizations": [],\n  "dates": [],\n  "key_points": []\n}`,
+  "长文摘要 · 滚动": `请把下面这篇长文摘要为 3 个层次的输出：\n\n【第一层 · 一句话】（不超过 30 字）\n【第二层 · 5 个 bullet】（每条不超过 1 句话）\n【第三层 · 一段话】（不超过 200 字）\n\n如果原文超过 5000 字，请先告诉我我打算怎么切分它。\n\n【原文】\n---\n{在这里粘贴长文}\n---`,
+  "App Icon Generator": `Generate a polished [PLATFORM] app icon for "[BRAND_NAME]". Create a single centered app icon on a clean background, with strong silhouette clarity and generous padding. The icon should feel immediately recognizable at small sizes. Use a [STYLE] visual approach with refined materials, controlled lighting, clean edges, balanced depth, and no clutter.\n\nRepresent the business category "[INDUSTRY]" through a [ICON_ARCHETYPE]-driven concept. Show [CORE_SUBJECT] as the dominant subject, using [BUSINESS_METAPHOR] as the core visual idea. Include [SECONDARY_PROP] only if it improves clarity, and keep it secondary.\n\nColor system: [PRIMARY_COLOR] as the main color, with [ACCENT_COLOR] for selective accents. Express a [BRAND_TONE] personality. Keep the composition [SIMPLICITY_LEVEL], premium, cohesive, and scalable.\n\nText treatment: [LABEL_STRATEGY]. If text appears, show it only once and keep it subtle, small, and integrated into the icon. No extra text, no collage, no UI mockup, no poster layout, no multiple icons, no watermark, no busy background.\n\nQuality control: one icon, one dominant subject, one message; legible at 32px and 64px; square 1:1 imagery suitable for downstream icon production.`
+};
+function findBodyForCard(cardEl) {
+  const dataId = cardEl.dataset.id;
+  if (dataId) {
+    const db = loadDB();
+    const item = db.prompts.find(p => p.id === dataId);
+    if (item) return item.body;
+  }
+  return cardEl.dataset.body || STATIC_PROMPT_BODIES[cardEl.querySelector(".pc-title")?.textContent.trim()] || "";
+}
+function escapeHTML(s) { return String(s).replace(/[<>&"']/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;","'":"&#39;"}[c])); }
+
+document.querySelectorAll(".pc-copy").forEach(btn => {
+  btn.addEventListener("click", async () => {
+    const card = btn.closest(".p-card");
+    const body = findBodyForCard(card);
+    if (!body) { alert("暂无内容"); return; }
+    try {
+      await navigator.clipboard.writeText(body);
+      btn.textContent = "已复制 ✓";
+      btn.classList.add("copied");
+      setTimeout(() => { btn.textContent = "复制"; btn.classList.remove("copied"); }, 1500);
+    } catch {
+      btn.textContent = "请按 ⌘C";
+      setTimeout(() => { btn.textContent = "复制"; }, 1800);
+    }
+  });
+});
+
+/* ========== 完整提示词弹窗 ========== */
+const promptModal = document.getElementById("promptModal");
+const promptModalTitle = document.getElementById("promptModalTitle");
+const promptModalMeta = document.getElementById("promptModalMeta");
+const promptModalText = document.getElementById("promptModalText");
+const promptModalGallery = document.getElementById("promptModalGallery");
+let activePromptBody = "";
+function openPromptModal(card) {
+  activePromptBody = findBodyForCard(card);
+  const title = card.querySelector(".pc-title")?.textContent || "完整提示词";
+  const meta = card.querySelector(".pc-meta")?.textContent || "PROMPT";
+  promptModalTitle.textContent = title;
+  promptModalMeta.textContent = meta;
+  promptModalGallery.innerHTML = (card.dataset.gallery || "").split("|").filter(Boolean).map(src => `<img src="${src}" alt="提示词生成示例" loading="lazy">`).join("");
+  promptModalText.textContent = activePromptBody || "暂无完整提示词内容";
+  promptModal.classList.add("open");
+}
+document.addEventListener("click", e => { const link = e.target.closest(".pc-open"); if (!link) return; e.preventDefault(); openPromptModal(link.closest(".p-card")); });
+document.getElementById("promptModalClose").addEventListener("click", () => promptModal.classList.remove("open"));
+promptModal.addEventListener("click", e => { if (e.target === promptModal) promptModal.classList.remove("open"); });
+document.getElementById("promptModalCopy").addEventListener("click", async () => { if (!activePromptBody) return; try { await navigator.clipboard.writeText(activePromptBody); document.getElementById("promptModalCopy").textContent = "已复制 ✓"; setTimeout(() => document.getElementById("promptModalCopy").textContent = "复制完整提示词", 1500); } catch { alert("请手动选择文本复制"); } });
+document.addEventListener("keydown", e => { if (e.key === "Escape") promptModal.classList.remove("open"); });
+
+/* ========== 追加从后台(localStorage)来的卡片 ========== */
+(function appendCMSCards() {
+  const db = loadDB();
+  if (!db.prompts.length) return;
+  const grid = document.getElementById("grid");
+  if (!grid) return;
+  // 先把静态卡片强制显示（防止 IntersectionObserver 没触发）
+  document.querySelectorAll(".p-card.reveal:not(.in)").forEach(el => el.classList.add("in"));
+  db.prompts.forEach((p, idx) => {
+    if (grid.querySelector(`[data-id="${p.id}"]`)) return;
+    const card = document.createElement("article");
+    card.className = "p-card reveal in";
+    card.dataset.kind = p.kind || "ROLE";
+    card.dataset.id = p.id;
+    card.dataset.body = p.body || "";
+    const tagsHTML = (p.tags || []).map(t => `<span class="pc-tag">${escapeHTML(t)}</span>`).join("");
+    const imgHTML = p.image
+      ? `<img src="${p.image}" alt="${escapeHTML(p.title)}">`
+      : `<div style="color:var(--fg-muted);font-size:9px;letter-spacing:0.3em;">[ 缩略图占位 ]</div>`;
+    card.innerHTML = `
+      <div class="pc-thumb">
+        <span class="pc-case-badge">CMS · Nº ${String(idx + 1).padStart(2, "0")}</span>
+        ${imgHTML}
+      </div>
+      <div class="pc-body">
+        <span class="pc-num">CMS</span>
+        <h3 class="pc-title">${escapeHTML(p.title || "")}</h3>
+        <div class="pc-tags">${tagsHTML}</div>
+        <p class="pc-meta"><strong>${p.kind || "CUSTOM"}</strong> · @AingFang</p>
+        <p class="pc-preview">${escapeHTML(p.preview || (p.body || "").slice(0, 90) + "...")}</p>
+        <div class="pc-actions">
+          <button class="pc-copy" type="button">复制</button>
+          <span class="pc-tag-amber">CMS</span>
+        </div>
+      </div>
+    `;
+    grid.appendChild(card);
+    const copyBtn = card.querySelector(".pc-copy");
+    copyBtn.addEventListener("click", async () => {
+      const body = findBodyForCard(card);
+      if (!body) return;
+      try {
+        await navigator.clipboard.writeText(body);
+        copyBtn.textContent = "已复制 ✓";
+        copyBtn.classList.add("copied");
+        setTimeout(() => { copyBtn.textContent = "复制"; copyBtn.classList.remove("copied"); }, 1500);
+      } catch {
+        copyBtn.textContent = "请按 ⌘C";
+        setTimeout(() => { copyBtn.textContent = "复制"; }, 1800);
+      }
+    });
+  });
+})();
+
+/* ========== 控制台彩蛋 ========== */
+console.log(
+  "%c📚 提示词库。\n%c精选 6 张高频提示词 · 复制即用。\n%c想要更多？→ about.html",
+  "font-size:18px;font-weight:700;color:#d4913e;",
+  "font-size:12px;color:#5a5247;line-height:1.8;",
+  "font-size:11px;color:#a09a8c;letter-spacing:0.2em;"
+);
+</script>
+</body>
+</html>

@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>关于 · 房语 — Aing</title>
+<style>
+/* ============================================================
+   关于页 · 信笔 / 文集风
+   几乎只用 黑 + 米白 两色，不加琥珀点缀
+   大留白 / 窄列 / 段间距 2.2em / 几乎无动效
+   像读一封长信 / 一本薄薄的小集子
+   ============================================================ */
+:root {
+  --bg: #faf8f5;
+  --bg-deep: #f0ece5;
+  --fg: #1a1612;
+  --fg-soft: #5a5247;
+  --fg-muted: #a09a8c;
+  --amber: #d4913e;
+  --amber-glow: rgba(212, 145, 62, 0.18);
+  --hairline: rgba(26, 22, 18, 0.12);
+  --serif: "Songti SC", "Noto Serif SC", "Source Han Serif SC", Georgia, serif;
+  --serif-en: "Cormorant Garamond", "Garamond", Georgia, serif;
+  --sans: "PingFang SC", "Noto Sans SC", "Helvetica Neue", sans-serif;
+  --mono: "IBM Plex Mono", "SF Mono", "Menlo", monospace;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--serif);
+  font-size: 17px;
+  line-height: 1.95;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  letter-spacing: 0.01em;
+}
+::selection { background: var(--fg); color: var(--bg); }
+
+/* 纸纹噪点 — 比主页更轻 */
+body::before {
+  content:""; position:fixed; inset:0; z-index:9999; pointer-events:none; opacity:0.22;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.03 0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* 顶部横向导航条 — 与主页一致 */
+#topNav {
+  position:fixed; top:0; left:0; right:0; z-index:9999;
+  display:flex; justify-content:space-between; align-items:center;
+  padding:14px 24px;
+  background:rgba(250, 248, 245, 0.85);
+  backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--hairline);
+  font-family:var(--mono); font-size:10px; letter-spacing:0.25em;
+  text-transform:uppercase;
+}
+#topNav .nav-mark {
+  font-family:var(--serif); font-weight:900; font-size:14px;
+  color:var(--fg); letter-spacing:0.4em; text-transform:none;
+}
+#topNav .nav-links { display:flex; gap:28px; }
+#topNav .nav-links a {
+  text-decoration:none; color:var(--fg-muted);
+  transition:color 0.35s cubic-bezier(.22,1,.36,1);
+  position:relative;
+}
+#topNav .nav-links a:hover { color:var(--amber); }
+#topNav .nav-links a.active { color:var(--fg); }
+#topNav .nav-links a.active::after {
+  content:""; position:absolute; left:0; right:0; bottom:-6px;
+  height:1px; background:var(--amber);
+}
+@media (max-width:640px) {
+  #topNav { padding:10px 16px; font-size:9px; }
+  #topNav .nav-links { gap:18px; }
+  #topNav .nav-mark { font-size:12px; letter-spacing:0.3em; }
+}
+
+/* UPDATED 指示器 — 已合并到 #topNav 内部 */
+#lastUpdated {
+  font-family:var(--mono); font-size:10px; letter-spacing:0.2em;
+  color:var(--fg-muted); text-transform:uppercase;
+  display:flex; align-items:center; gap:8px;
+}
+#lastUpdated::before {
+  content:""; width:5px; height:5px; border-radius:50%;
+  background:var(--amber); box-shadow:0 0 8px var(--amber-glow);
+  animation:dotPulse 2.6s ease-in-out infinite;
+}
+@keyframes dotPulse {
+  0%,100% { opacity:0.55; transform:scale(1); }
+  50%     { opacity:1;    transform:scale(1.35); }
+}
+
+/* 光晕 — 跟随鼠标的琥珀色环境光 */
+#ambientGlow {
+  position:fixed; pointer-events:none; z-index:2;
+  width:600px; height:600px;
+  border-radius:50%;
+  background:radial-gradient(circle, var(--amber-glow) 0%, transparent 70%);
+  transform:translate(-50%, -50%);
+  opacity:0; transition:opacity 0.6s;
+  mix-blend-mode:multiply;
+}
+body:hover #ambientGlow { opacity:1; }
+
+/* 滚动进度线 */
+#progress {
+  position:fixed; top:0; left:0; height:2px; width:0%;
+  background:var(--amber); z-index:10000;
+  transition: width 0.08s linear;
+}
+
+/* ========== 极简版心 · 窄列 ========== */
+.wrap {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0 8vw;
+  position:relative; z-index:1;
+}
+
+/* ========== 入场 — 比主页更"安静" ========== */
+.reveal {
+  opacity:0; transform:translateY(20px);
+  transition:opacity 1.2s ease, transform 1.2s ease;
+}
+.reveal.in { opacity:1; transform:none; }
+.reveal.d1 { transition-delay:0.15s; }
+.reveal.d2 { transition-delay:0.3s; }
+.reveal.d3 { transition-delay:0.45s; }
+
+/* ========== 章节通用 ========== */
+section { padding: 12vh 0; position:relative; z-index:1; }
+.sec-label {
+  font-family:var(--mono); font-size:10px; letter-spacing:0.4em;
+  color:var(--amber);
+  display:block; margin-bottom:32px; text-transform:uppercase;
+}
+.sec-heading {
+  font-family:var(--serif); font-weight:700;
+  font-size:clamp(24px, 4vw, 34px); line-height:1.4;
+  margin-bottom:48px; letter-spacing:-0.01em;
+}
+
+/* ========== 卷首 · 像信的开头 ========== */
+#preface {
+  min-height: 80vh;
+  display:flex; flex-direction:column; justify-content:center;
+  padding-top: 18vh;
+}
+.preface-mark {
+  font-family:var(--mono); font-size:10px; letter-spacing:0.4em;
+  color:var(--fg-muted); text-transform:uppercase;
+  margin-bottom:32px;
+}
+.preface-title {
+  font-family:var(--serif); font-weight:700;
+  font-size:clamp(32px, 6vw, 56px); line-height:1.3;
+  margin-bottom:48px; letter-spacing:-0.02em;
+}
+.preface-body {
+  font-size:18px; line-height:2.1; color:var(--fg);
+  margin-bottom:24px;
+}
+.preface-sign {
+  margin-top:48px; font-size:14px; color:var(--fg-soft);
+  font-family:var(--serif-en); font-style:italic;
+}
+
+/* ========== 一句话序言 ========== */
+.prelude {
+  margin:18vh auto 8vh;
+  max-width:680px;
+  padding:32px 36px;
+  border-left:2px solid var(--amber);
+  background:rgba(212,145,62,0.04);
+}
+.prelude .pr-mark {
+  font-family:var(--mono); font-size:10px; letter-spacing:0.4em;
+  color:var(--amber); margin-bottom:14px; text-transform:uppercase;
+}
+.prelude .pr-text {
+  font-family:var(--serif); font-style:italic;
+  font-size:clamp(15px, 1.7vw, 18px); line-height:1.85;
+  color:var(--fg);
+}
+
+/* ========== 常展开卡片 ========== */
+.open-list { display:flex; flex-direction:column; gap:48px; margin-top:6vh; }
+.open-card {
+  position:relative;
+  padding-bottom:48px;
+  border-bottom:1px solid var(--hairline);
+}
+.open-card:last-child { border-bottom:none; padding-bottom:0; }
+.open-card .oc-label {
+  font-family:var(--mono); font-size:10px; letter-spacing:0.4em;
+  color:var(--amber); text-transform:uppercase;
+  margin-bottom:18px;
+}
+.open-card .oc-title {
+  font-family:var(--serif); font-weight:700;
+  font-size:clamp(28px, 3.5vw, 38px); line-height:1.25;
+  color:var(--fg); letter-spacing:-0.015em;
+  margin-bottom:24px;
+}
+.open-card .oc-body {
+  font-family:var(--serif); font-size:16px; line-height:2.05;
+  color:var(--fg-soft);
+}
+.open-card .oc-body p { margin-bottom:18px; }
+.open-card .oc-body p:last-child { margin-bottom:0; }
+.open-card .oc-body strong { color:var(--fg); font-weight:700; }
+.open-card .oc-num {
+  position:absolute; top:0; left:-8px;
+  font-family:var(--serif); font-weight:300;
+  font-size:96px; color:var(--bg-deep);
+  line-height:1; z-index:-1;
+  user-select:none;
+}
+@media (max-width:640px) {
+  .open-card { padding-bottom:32px; }
+  .open-card .oc-num { font-size:60px; left:-4px; }
+  .open-card .oc-title { font-size:24px; }
+  .open-card .oc-body { font-size:15px; line-height:1.95; }
+}
+
+/* ========== §01 30 岁那年 ========== */
+#year-thirty p {
+  margin-bottom: 28px;
+  text-indent: 0;
+}
+
+/* ========== §02 时间线 · 30 → 35 ========== */
+#timeline { padding: 14vh 0; }
+.timeline {
+  margin-top: 64px;
+  position:relative;
+  padding-left: 0;
+}
+/* 中央竖线 */
+.timeline::before {
+  content:""; position:absolute;
+  left:50%; top:0; bottom:0; width:1px;
+  background:var(--hairline);
+  transform:translateX(-50%);
+}
+.tl-item {
+  display:grid;
+  grid-template-columns:1fr 80px 1fr;
+  gap:24px; align-items:start;
+  margin-bottom:80px;
+  position:relative;
+}
+.tl-item:last-child { margin-bottom:0; }
+/* 圆点 */
+.tl-item::before {
+  content:""; position:absolute;
+  left:50%; top:8px;
+  width:9px; height:9px;
+  border-radius:50%;
+  background:var(--bg);
+  border:1.5px solid var(--amber);
+  transform:translateX(-50%);
+  z-index:1;
+}
+/* 左右交替 */
+.tl-item .tl-text { font-size:16px; line-height:1.9; color:var(--fg-soft); }
+.tl-item .tl-text.left  { text-align:right; padding-right:8px; }
+.tl-item .tl-text.right { text-align:left;  padding-left:8px; }
+.tl-item .tl-year {
+  text-align:center;
+  font-family:var(--serif); font-weight:700;
+  font-size:24px; color:var(--fg);
+  padding-top:0;
+}
+/* 节点标题 */
+.tl-item .tl-title {
+  font-family:var(--serif); font-weight:700;
+  font-size:17px; color:var(--fg);
+  margin-bottom:8px;
+}
+.tl-item .tl-quote {
+  margin-top:12px; font-size:14px; color:var(--fg-muted);
+  font-style:italic; line-height:1.8;
+}
+@media (max-width:640px) {
+  .timeline::before { left:24px; transform:none; }
+  .tl-item { grid-template-columns:48px 1fr; gap:16px; }
+  .tl-item::before { left:24px; transform:translateX(-50%); }
+  .tl-item .tl-year { text-align:left; font-size:20px; }
+  .tl-item .tl-text.left,
+  .tl-item .tl-text.right { text-align:left; padding:0; }
+  /* 全部移到竖线右侧 */
+  .tl-item .tl-text.left { grid-column:2; grid-row:2; padding-left:16px; }
+  .tl-item .tl-year { grid-column:1; }
+}
+
+/* ========== §03 作品 ========== */
+.work {
+  border-top:1px solid var(--hairline);
+  padding:32px 0;
+}
+.work:last-child { border-bottom:1px solid var(--hairline); }
+.work-id {
+  font-family:var(--mono); font-size:10px; letter-spacing:0.3em;
+  color:var(--amber); margin-bottom:8px;
+}
+.work-title {
+  font-family:var(--serif); font-weight:700;
+  font-size:22px; margin-bottom:8px;
+}
+.work-meta {
+  font-size:13px; color:var(--fg-muted);
+  margin-bottom:16px; font-style:italic;
+}
+.work-body {
+  font-size:16px; line-height:2.0; color:var(--fg-soft);
+}
+.work-body p { margin-bottom:16px; }
+
+/* ========== 提示词 3D 错位轮播 ========== */
+.prompt-strip {
+  position:relative;
+  margin-top:120px;
+  height: 540px;
+  perspective: 1200px;
+  overflow:visible;
+}
+.prompt-track {
+  position:absolute; inset:0;
+  display:flex; align-items:center; justify-content:center;
+  transform-style:preserve-3d;
+  transition:transform 0.7s cubic-bezier(.22,1,.36,1);
+  cursor:grab;
+}
+.prompt-track.dragging { cursor:grabbing; transition:none; }
+.prompt-card {
+  position:absolute;
+  width: 280px; height: 470px;
+  background:var(--bg);
+  border:1px solid var(--hairline);
+  border-radius:6px;
+  box-shadow:0 12px 40px rgba(26,22,18,0.10);
+  padding:24px;
+  display:flex; flex-direction:column;
+  cursor:pointer;
+  transition:transform 0.7s cubic-bezier(.22,1,.36,1), opacity 0.5s, box-shadow 0.35s;
+  user-select:none;
+}
+.prompt-card:hover {
+  box-shadow:0 18px 50px rgba(212,145,62,0.18);
+  border-color:var(--amber);
+}
+.prompt-card .pc-num {
+  font-family:var(--mono); font-size:10px; letter-spacing:0.3em;
+  color:var(--amber); margin-bottom:12px;
+}
+.prompt-card .pc-title {
+  font-family:var(--serif); font-weight:700;
+  font-size:17px; line-height:1.35; margin-bottom:4px;
+  color:var(--fg);
+}
+.prompt-card .pc-kind {
+  font-family:var(--mono); font-size:9px; letter-spacing:0.2em;
+  color:var(--fg-muted); text-transform:uppercase; margin-bottom:10px;
+}
+.prompt-card .pc-preview {
+  font-family:var(--mono); font-size:10px; line-height:1.6;
+  color:var(--fg-soft);
+  display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical;
+  overflow:hidden;
+  margin-bottom:10px;
+}
+.prompt-card .pc-hint {
+  margin-top:auto;
+  font-family:var(--mono); font-size:9px; letter-spacing:0.25em;
+  color:var(--fg-muted); text-transform:uppercase;
+  display:flex; align-items:center; gap:6px;
+}
+.prompt-card .pc-detail {
+  display:inline-block; margin-top:4px;
+  font-family:var(--mono); font-size:9px; letter-spacing:0.25em;
+  color:var(--amber); text-decoration:none; text-transform:uppercase;
+  transition:color 0.35s, transform 0.35s;
+  pointer-events:auto;
+}
+.prompt-card .pc-detail:hover { color:var(--fg); transform:translateX(3px); }
+.prompt-card .pc-hint::after {
+  content:"→"; color:var(--amber); transition:transform 0.35s;
+}
+.prompt-card:hover .pc-hint::after { transform:translateX(4px); }
+
+/* 卡片"缩略图"占位 — 你之后换图 */
+.prompt-card .pc-thumb {
+  width:100%; height:240px; margin-bottom:10px;
+  background:var(--bg-deep);
+  border:1px solid var(--hairline);
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--mono); font-size:9px; letter-spacing:0.3em;
+  color:var(--fg-muted);
+  border-radius:4px;
+  overflow:hidden;
+  position:relative;
+}
+.prompt-card .pc-thumb img {
+  width:100%; height:100%;
+  object-fit:cover;
+  object-position:center 28%;    /* 偏上，保留脸和肩 */
+  display:block;
+}
+
+/* 左右控制 */
+.prompt-nav {
+  margin-top:32px;
+  display:flex; justify-content:center; align-items:center; gap:24px;
+  font-family:var(--mono); font-size:10px; letter-spacing:0.3em;
+  color:var(--fg-muted); text-transform:uppercase;
+}
+.prompt-btn {
+  background:none; border:none; padding:8px 12px;
+  font:inherit; color:var(--fg-soft); cursor:pointer;
+  transition:color 0.35s;
+}
+.prompt-btn:hover { color:var(--amber); }
+.prompt-dots { display:flex; gap:10px; }
+.prompt-dot {
+  width:6px; height:6px; border-radius:50%;
+  background:var(--fg-muted); opacity:0.4;
+  transition:all 0.35s;
+}
+.prompt-dot.active { background:var(--amber); opacity:1; transform:scale(1.4); }
+
+@media (max-width:640px) {
+  .prompt-strip { height: 360px; }
+  .prompt-card { width:240px; height:340px; padding:20px; }
+}
+
+/* ========== 全屏弹层 ========== */
+.prompt-modal {
+  position:fixed; inset:0; z-index:10000;
+  background:rgba(26,22,18,0.72);
+  backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+  display:flex; align-items:center; justify-content:center;
+  padding:6vh 6vw;
+  opacity:0; pointer-events:none;
+  transition:opacity 0.35s;
+}
+.prompt-modal.open { opacity:1; pointer-events:auto; }
+.prompt-modal-inner {
+  width:100%; max-width:720px; max-height:88vh;
+  background:var(--bg);
+  border:1px solid var(--hairline);
+  border-radius:8px;
+  overflow:hidden;
+  display:flex; flex-direction:column;
+  transform:translateY(20px); transition:transform 0.45s cubic-bezier(.22,1,.36,1);
+  box-shadow:0 30px 80px rgba(0,0,0,0.4);
+}
+.prompt-modal.open .prompt-modal-inner { transform:none; }
+.pm-head {
+  padding:24px 28px 16px;
+  border-bottom:1px solid var(--hairline);
+  display:flex; justify-content:space-between; align-items:flex-start;
+  gap:16px;
+}
+.pm-title { flex:1; }
+.pm-num {
+  font-family:var(--mono); font-size:10px; letter-spacing:0.3em;
+  color:var(--amber); margin-bottom:6px;
+}
+.pm-name {
+  font-family:var(--serif); font-weight:700;
+  font-size:22px; line-height:1.4;
+}
+.pm-kind {
+  font-family:var(--mono); font-size:10px; letter-spacing:0.2em;
+  color:var(--fg-muted); text-transform:uppercase;
+  margin-top:4px;
+}
+.pm-close {
+  background:none; border:none; padding:6px;
+  font-family:var(--mono); font-size:18px; color:var(--fg-muted);
+  cursor:pointer; transition:color 0.35s, transform 0.35s;
+  line-height:1;
+}
+.pm-close:hover { color:var(--amber); transform:rotate(90deg); }
+
+.pm-body {
+  padding:24px 28px;
+  overflow-y:auto;
+  font-family:var(--mono); font-size:13px; line-height:1.9;
+  color:var(--fg); white-space:pre-wrap;
+  background:var(--bg);
+}
+.pm-thumb {
+  margin-bottom:20px;
+  width:100%; height:380px;
+  background:var(--bg-deep);
+  border:1px solid var(--hairline);
+  border-radius:4px;
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--mono); font-size:10px; letter-spacing:0.3em;
+  color:var(--fg-muted);
+  overflow:hidden;
+  position:relative;
+}
+.pm-thumb img {
+  width:100%; height:100%;
+  object-fit:cover;
+  object-position:center 28%;
+  display:block;
+}
+
+.pm-foot {
+  padding:16px 28px;
+  border-top:1px solid var(--hairline);
+  display:flex; justify-content:flex-end; gap:12px;
+}
+.pm-copy {
+  font-family:var(--mono); font-size:10px; letter-spacing:0.3em;
+  background:none; border:1px solid var(--fg);
+  padding:10px 20px; color:var(--fg);
+  text-transform:uppercase; cursor:pointer;
+  transition:all 0.35s cubic-bezier(.22,1,.36,1);
+}
+.pm-copy:hover { background:var(--fg); color:var(--bg); }
+.pm-copy.copied { border-color:var(--amber); color:var(--amber); }
+
+/* ========== §04 读书 ========== */
+.book-list { list-style:none; }
+.book {
+  display:grid; grid-template-columns:80px 1fr;
+  gap:24px; padding:24px 0;
+  border-bottom:1px solid var(--hairline);
+  align-items:baseline;
+}
+.book:last-child { border-bottom:none; }
+.book-num {
+  font-family:var(--mono); font-size:11px; letter-spacing:0.2em;
+  color:var(--amber);
+}
+.book-title {
+  font-family:var(--serif); font-weight:700;
+  font-size:18px; margin-bottom:6px;
+}
+.book-meta {
+  font-size:13px; color:var(--fg-muted); font-style:italic;
+  margin-bottom:8px;
+}
+.book-feel {
+  font-size:15px; line-height:1.9; color:var(--fg-soft);
+}
+
+/* ========== §05 结语 ========== */
+#closing p {
+  font-size:18px; line-height:2.2;
+  margin-bottom:28px;
+}
+#closing .signoff {
+  margin-top:64px;
+  font-family:var(--serif-en); font-style:italic;
+  color:var(--fg-soft); font-size:16px;
+}
+
+/* ========== 顶部回到主页 ========== */
+.back-home {
+  display:inline-block; margin-bottom:24px;
+  font-family:var(--mono); font-size:10px; letter-spacing:0.3em;
+  color:var(--fg-muted); text-decoration:none; text-transform:uppercase;
+  transition:color 0.35s;
+}
+.back-home:hover { color:var(--amber); }
+
+/* ========== FOOTER ========== */
+footer {
+  padding: 8vh 0 12vh;
+  text-align:center;
+  position:relative; z-index:1;
+}
+footer .fine {
+  font-family:var(--mono); font-size:10px; letter-spacing:0.2em;
+  color:var(--fg-muted);
+}
+
+/* ========== 页面切换动画 ========== */
+body {
+  animation: pageEnter 0.55s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes pageEnter {
+  from { opacity:0; transform:translateY(24px); }
+  to   { opacity:1; transform:none; }
+}
+body.page-leaving {
+  animation: pageLeave 0.32s cubic-bezier(.4,0,.6,1) both;
+  pointer-events:none;
+}
+@keyframes pageLeave {
+  from { opacity:1; transform:none; }
+  to   { opacity:0; transform:translateY(-16px); }
+}
+
+/* ========== 减少动效 ========== */
+@media (prefers-reduced-motion:reduce) {
+  .reveal { opacity:1; transform:none; transition:none; }
+  html { scroll-behavior:auto; }
+}
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+<div id="ambientGlow"></div>
+<nav id="topNav" aria-label="主导航">
+  <span class="nav-mark">房  语</span>
+  <div class="nav-links">
+    <a href="index.html">主页</a>
+    <a href="about.html" class="active">关于</a>
+    <a href="prompts.html">AI 实验室</a>
+    <a href="works.html">作品</a>
+  </div>
+  <div id="lastUpdated">UPDATED · <span id="lastUpdatedDays">—</span></div>
+</nav>
+
+<!-- ========== 卷首 · 像信的开头 ========== -->
+<section id="preface">
+  <div class="wrap">
+    <span class="preface-mark reveal">A LETTER · 致读者</span>
+    <h1 class="preface-title reveal d1">
+      你好，我是房语 Aing。<br>
+      这是一份，<br>
+      关于技术、商业与资本的履历。
+    </h1>
+    <div class="preface-body reveal d2">
+      <p>我站在技术、商业与资本的交叉路口，用“从业 + 创业”和“技术 + 趋势”两种视角观察 AI Agent、技术落地与商业机会。</p>
+      <p>我亲历过互联网商业化与区块链资产红利，也经历过周期调整。现在，我把运营、项目、资源整合与投资经验，重新投入 AI 应用和企业智能化转型。</p>
+      <p>如果你正在寻找前沿项目、创业伙伴或真实落地的 AI 机会，欢迎读到最后。</p>
+    </div>
+    <p class="preface-sign reveal d3">— Aing · 写于 2026 年夏天</p>
+  </div>
+</section>
+
+<!-- ========== §序 · 一句话 ========== -->
+<section id="prelude">
+  <div class="wrap">
+    <div class="prelude reveal">
+      <div class="pr-mark">— ONE SENTENCE · 一句话</div>
+      <p class="pr-text">房语 Aing：AI 自媒体创作者、初创企业负责人、个体投资人，关注 AI Agent、技术商业化、早期项目投资与运营。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ========== §01 30 岁那年 ========== -->
+<section id="year-thirty">
+  <div class="wrap">
+    <div class="open-list">
+      <article class="open-card reveal">
+        <span class="oc-num">01</span>
+        <span class="oc-label">§01 · 2014—2017</span>
+        <h2 class="oc-title">互联网电商</h2>
+        <div class="oc-body">
+          <p>移动互联网红利期，我从核心运营走向项目牵头，参与互联网电商业务的增长与商业化。</p>
+          <p>主导的项目在毕业次年获得百万级天使投资。这段经历让我第一次看到：<strong>执行力可以把趋势变成真实的业务结果</strong>。</p>
+        </div>
+      </article>
+
+      <article class="open-card reveal">
+        <span class="oc-num">02</span>
+        <span class="oc-label">§02 · 2017—2021</span>
+        <h2 class="oc-title">区块链与数字资产</h2>
+        <div class="oc-body">
+          <p>区块链技术引爆资产数字化浪潮，我从行业从业者转型为创业者，完成从 0 到 1 的闭环验证。</p>
+          <p>我获得了个人资产的重要跃迁，达到 A8 级别。尝过风口的甘甜，也踩过泡沫的悲壮。</p>
+        </div>
+      </article>
+
+      <article class="open-card reveal">
+        <span class="oc-num">03</span>
+        <span class="oc-label">§03 · 2023—至今</span>
+        <h2 class="oc-title">AI 深度耕耘</h2>
+        <div class="oc-body">
+          <p>我投资过算力与硬件，持续观察 AI 基础设施与应用层的机会。</p>
+          <p>现在全面转向 AI 应用、Agent 生态与 AI 原生内容创作，寻找再次创业的突破口。</p>
+        </div>
+      </article>
+
+      <article class="open-card reveal">
+        <span class="oc-num">04</span>
+        <span class="oc-label">§04 · 不是重新开始</span>
+        <h2 class="oc-title">是能力迁移</h2>
+        <div class="oc-body">
+          <p>我现在做 AI，<strong>不是从零开始换赛道，而是把过去几年积累的能力重新组合</strong>。</p>
+          <p>过去的运营经验，让我知道业务真正卡在哪里；<br>
+          过去的创业经历，让我知道一个项目如何从想法变成结果；<br>
+          过去的硬件和产业经验，让我更关注成本、交付和真实场景；<br>
+          而现在的 AI，则给了我一套新的工具，可以把这些经验<strong>放大</strong>。</p>
+        </div>
+      </article>
+
+      <article class="open-card reveal">
+        <span class="oc-num">05</span>
+        <span class="oc-label">§05 · 判断与方法</span>
+        <h2 class="oc-title">为什么是 AI</h2>
+        <div class="oc-body">
+          <p>我的科技周期路径是：<strong>互联网 → 区块链 → AI</strong>。这不是偶然选择，而是对技术演进主线的持续追踪。</p>
+          <p>AI 需要强大的执行力、不屈服的学习劲头，以及敢于在趋势形成早期躬身入局的勇气。</p>
+          <p>我希望把 AI 从“会演示的工具”，变成真正能用、能跑、能产生结果的系统。</p>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ========== §04 读书（保留） ========== -->
+<section id="reading">
+  <div class="wrap">
+    <span class="sec-label reveal">§04 · 读书</span>
+    <h2 class="sec-heading reveal d1">最近在读 / 读过的</h2>
+
+    <ul class="book-list">
+      <li class="book reveal">
+        <span class="book-num">01</span>
+        <div>
+          <div class="book-title">《思考，快与慢》</div>
+          <div class="book-meta">丹尼尔·卡尼曼 · 2011</div>
+          <div class="book-feel">读得很慢，但每一章都在推翻一个我以前坚信的"常识"。关于"系统 1 / 系统 2"的框架被我用在了所有运营决策里。</div>
+        </div>
+      </li>
+      <li class="book reveal">
+        <span class="book-num">02</span>
+        <div>
+          <div class="book-title">《AI 3.0》</div>
+          <div class="book-meta">梅拉妮·米切尔 · 2019</div>
+          <div class="book-feel">"通用人工智能到底走到了哪一步"——这本书不卖焦虑也不画大饼，把每个"还做不到"讲得很清楚。</div>
+        </div>
+      </li>
+      <li class="book reveal">
+        <span class="book-num">03</span>
+        <div>
+          <div class="book-title">《纳瓦尔宝典》</div>
+          <div class="book-meta">埃里克·乔根森 编 · 2020</div>
+          <div class="book-feel">"追求财富而不是金钱"这句话改变了我对"工作"的理解——我开始把每个项目当杠杆，而不是当工资。</div>
+        </div>
+      </li>
+      <li class="book reveal">
+        <span class="book-num">04</span>
+        <div>
+          <div class="book-title">《怎样才能不吃亏》</div>
+          <div class="book-meta">待定作者 · 2024</div>
+          <div class="book-feel">一本让我重新理解"边界"的书。人和人之间最累的不是冲突，是没边界。</div>
+        </div>
+      </li>
+      <li class="book reveal">
+        <span class="book-num">05</span>
+        <div>
+          <div class="book-title">《万物原理》</div>
+          <div class="book-meta">弗兰克·维尔切克 · 2021</div>
+          <div class="book-feel">物理学家写的"世界观"。我读这本书不是为了学物理，是为了练习"用更大的尺度看自己"。</div>
+        </div>
+      </li>
+      <li class="book reveal">
+        <span class="book-num">06</span>
+        <div>
+          <div class="book-title">《把自己作为方法》</div>
+          <div class="book-meta">吴琦 / 项飙 · 2020</div>
+          <div class="book-feel">对话体。一本教你"怎么把生活经验变成方法论"的小书。这本"关于"页本身，也是受它的启发。</div>
+        </div>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<!-- ========== FOOTER ========== -->
+<footer>
+  <div class="wrap">
+    <p class="fine"><a href="index.html" class="back-home" style="margin:0 12px;">← 回到主页</a> · © 2026 — 房语 Aing</p>
+  </div>
+</footer>
+
+<script>
+/* ========== 页面切换：拦截导航链接 · 触发 leave 动画 ========== */
+(function () {
+  const isInterPageLink = (a) => {
+    if (!a || a.target === "_blank") return false;
+    if (a.hasAttribute("download")) return false;
+    if (a.pathname === location.pathname && !a.hash) return false;
+    if (a.pathname.endsWith(".html") && a.pathname !== location.pathname) return true;
+    return false;
+  };
+  document.addEventListener("click", (e) => {
+    const a = e.target.closest("a");
+    if (!a || !isInterPageLink(a)) return;
+    e.preventDefault();
+    document.body.classList.add("page-leaving");
+    setTimeout(() => { location.href = a.href; }, 280);
+  });
+})();
+
+/* ========== 进度线 ========== */
+const p = document.getElementById("progress");
+window.addEventListener("scroll", () => {
+  const h = document.documentElement, max = h.scrollHeight - h.clientHeight;
+  p.style.width = (max > 0 ? (h.scrollTop / max) * 100 : 0) + "%";
+}, { passive: true });
+
+/* ========== 环境光晕跟随鼠标 ========== */
+const glow = document.getElementById("ambientGlow");
+window.addEventListener("mousemove", (e) => {
+  glow.style.left = e.clientX + "px";
+  glow.style.top = e.clientY + "px";
+}, { passive: true });
+
+/* ========== 最近更新指示 ========== */
+(function () {
+  const start = new Date(2026, 5, 22);
+  const today = new Date();
+  const days = Math.max(0, Math.floor((today - start) / 86400000));
+  document.getElementById("lastUpdatedDays").textContent =
+    days === 0 ? "TODAY" : days + "D AGO";
+})();
+
+/* ========== 折叠卡片 ========== */
+document.querySelectorAll("[data-fold]").forEach(fold => {
+  const trigger = fold.querySelector("[data-fold-trigger]");
+  if (!trigger) return;
+  trigger.addEventListener("click", (e) => {
+    // 避免点链接/按钮时触发折叠
+    if (e.target.closest("a, button")) return;
+    fold.classList.toggle("open");
+  });
+});
+
+/* ========== 入场 ========== */
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
+}, { threshold: 0.12 });
+document.querySelectorAll(".reveal").forEach(el => io.observe(el));
+
+/* ========== 提示词 3D 错位轮播 ========== */
+const prompts = [
+  {
+    num: "Nº 01",
+    name: "职业头像 · 华尔街美式",
+    kind: "HEADSHOT · IMAGE",
+    body:
+`Corporate executive headshot, Asian entrepreneur, professional business portrait, navy suit, white dress shirt, confident natural smile, looking at camera, dark gray gradient background, luxury studio lighting, high-end corporate branding style, executive portrait photography, LinkedIn premium headshot, Fortune 500 executive profile, photorealistic, ultra detailed skin texture, sharp eyes, 85mm lens, shallow depth of field, magazine quality, professional retouching, symmetrical composition`
+  },
+  {
+    num: "Nº 02",
+    name: "角色设定 · 通用专家",
+    kind: "ROLE",
+    body:
+`你是一位资深的「{领域}」专家。请按以下步骤回答我的问题：
+
+1. 先用 2-3 句话理解我的问题背景（如果不清楚，主动追问）
+2. 给出 3 条核心建议，每条不超过 2 句话
+3. 最后列 1-2 个"我可能没想到、但你可能需要知道"的细节
+
+约束：
+- 不要给"百科全书"式的回答
+- 不要回避不确定性，不确定就说"我不确定"
+- 不引用具体数据，除非你能保证是对的
+- 全程用中文，除非我主动切语言
+
+现在请听我的问题：`
+  },
+  {
+    num: "Nº 03",
+    name: "思路链 · CoT",
+    kind: "CHAIN-OF-THOUGHT",
+    body:
+`在给出最终答案之前，请先按下面的格式"一步一步想"：
+
+【我的理解】
+（用 1-2 句话复述题目，确认你理解对了）
+
+【拆分步骤】
+1. 第一步……
+2. 第二步……
+3. ……
+
+【每一步的中间结论】
+- 步骤 1 推出：……
+- 步骤 2 推出：……
+- ……
+
+【最终答案】
+（在以上推理之后给出）
+
+【检查】
+（回头看一遍，有没有逻辑跳跃 / 漏掉的边界条件）
+
+题目：`
+  },
+  {
+    num: "Nº 04",
+    name: "提示词润色 · 重写",
+    kind: "REWRITE",
+    body:
+`请把下面这段文字改写得更生动。请先告诉我你会选哪种语气（克制 / 锐利 / 温暖 / 学术），然后再改写。
+
+原文字：
+---
+{在这里粘贴你要改写的文字}
+---
+
+约束：
+- 保留原意，不要加新观点
+- 长度不要超过原文的 1.5 倍
+- 如果原文有事实错误，先标注，再改写`
+  },
+  {
+    num: "Nº 05",
+    name: "信息抽取 · JSON",
+    kind: "STRUCTURED",
+    body:
+`请从下面这段文字里，按指定 schema 抽取信息，按 JSON 输出。如果某个字段找不到，填 null，不要编造。
+
+【待抽取的文字】
+---
+{在这里粘贴}
+---
+
+【输出 schema】
+\`\`\`json
+{
+  "people": ["涉及的人名"],
+  "organizations": ["涉及的公司/机构"],
+  "dates": ["涉及的日期"],
+  "amounts": ["涉及的金额/数字"],
+  "key_points": ["3-5 条要点"],
+  "action_items": ["需要采取的行动"]
+}
+\`\`\`
+
+输出后，请用一句话总结这份 JSON 漏掉了什么。`
+  },
+  {
+    num: "Nº 06",
+    name: "长文摘要 · 滚动",
+    kind: "SUMMARIZE",
+    body:
+`请把下面这篇长文摘要为 3 个层次的输出：
+
+【第一层 · 一句话】（不超过 30 字）
+【第二层 · 5 个 bullet】（每条不超过 1 句话）
+【第三层 · 一段话】（不超过 200 字，覆盖核心论点和证据）
+
+如果原文超过 5000 字，请先告诉我"我打算怎么切分它"，再开始摘要。
+
+【原文】
+---
+{在这里粘贴长文}
+---`
+  }
+];
+
+const strip = document.getElementById("promptStrip");
+const track = document.getElementById("promptTrack");
+const cards = Array.from(track.querySelectorAll(".prompt-card"));
+const dots = Array.from(document.querySelectorAll("#promptDots .prompt-dot"));
+const prevBtn = document.getElementById("promptPrev");
+const nextBtn = document.getElementById("promptNext");
+const N = cards.length;
+
+let current = 0;        // 当前正中间卡片的下标
+let trackX = 0;         // track 当前 translateX
+let dragging = false;
+let dragStartX = 0;
+let dragStartTrackX = 0;
+
+const STEP = 200;       // 每次切换的位移（px）
+
+function layout() {
+  // 给每张卡片根据它相对 current 的位置设置 3D 变换
+  cards.forEach((c, i) => {
+    const offset = i - current;
+    let tx = offset * STEP;
+    let ty = 0;
+    let tz = 0;
+    let rot = 0;
+    let opacity = 1;
+    let scale = 1;
+
+    if (offset === 0) {
+      // 中间：抬升、正面、最亮
+      ty = -10; tz = 60; scale = 1.04;
+    } else if (Math.abs(offset) === 1) {
+      // 紧邻：倾斜、稍小
+      rot = offset > 0 ? 14 : -14;
+      ty = 18; tz = -40; scale = 0.95; opacity = 0.92;
+    } else if (Math.abs(offset) === 2) {
+      rot = offset > 0 ? 22 : -22;
+      ty = 32; tz = -100; scale = 0.88; opacity = 0.65;
+    } else {
+      rot = offset > 0 ? 28 : -28;
+      ty = 42; tz = -160; scale = 0.82; opacity = 0.3;
+    }
+
+    c.style.transform =
+      `translate(-50%, -50%) translateX(${tx}px) translateY(${ty}px) translateZ(${tz}px) rotateY(${rot}deg) scale(${scale})`;
+    c.style.opacity = opacity;
+    c.style.zIndex = String(100 - Math.abs(offset));
+    c.style.left = "50%";
+    c.style.top = "50%";
+    c.style.marginLeft = "-140px";   // 卡片宽度一半
+    c.style.marginTop = "-235px";    // 卡片高度一半（470/2）
+  });
+
+  // 更新圆点
+  dots.forEach((d, i) => d.classList.toggle("active", i === current));
+}
+
+/* 自动循环 */
+let autoTimer = null;
+const AUTO_MS = 4000;
+
+function startAuto() {
+  stopAuto();
+  autoTimer = setInterval(() => go(1), AUTO_MS);
+}
+function stopAuto() {
+  if (autoTimer) { clearInterval(autoTimer); autoTimer = null; }
+}
+
+/* 升级 go：每次手动切换时也重启自动循环 */
+function go(delta) {
+  current = (current + delta + N) % N;
+  layout();
+  startAuto();   // 切换后重置 4 秒倒计时
+}
+
+prevBtn.addEventListener("click", () => go(-1));
+nextBtn.addEventListener("click", () => go(1));
+dots.forEach((d, i) => d.addEventListener("click", () => { current = i; layout(); startAuto(); }));
+
+/* 鼠标 hover 暂停 · 离开继续 */
+strip.addEventListener("mouseenter", stopAuto);
+strip.addEventListener("mouseleave", startAuto);
+
+/* 拖拽滑动 */
+strip.addEventListener("mousedown", (e) => {
+  if (e.target.closest(".prompt-card")) return; // 点卡片不触发拖拽（让它触发弹层）
+  dragging = true;
+  track.classList.add("dragging");
+  dragStartX = e.clientX;
+});
+window.addEventListener("mousemove", (e) => {
+  if (!dragging) return;
+  const dx = e.clientX - dragStartX;
+  if (Math.abs(dx) > 60) {
+    go(dx < 0 ? 1 : -1);
+    dragging = false;
+    track.classList.remove("dragging");
+  }
+});
+window.addEventListener("mouseup", () => {
+  dragging = false;
+  track.classList.remove("dragging");
+});
+
+/* 触摸滑动 */
+let touchStartX = 0;
+strip.addEventListener("touchstart", (e) => {
+  if (e.target.closest(".prompt-card")) return;
+  touchStartX = e.touches[0].clientX;
+}, { passive: true });
+strip.addEventListener("touchend", (e) => {
+  const dx = (e.changedTouches[0].clientX - touchStartX);
+  if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1);
+}, { passive: true });
+
+/* 键盘 */
+window.addEventListener("keydown", (e) => {
+  if (document.getElementById("promptModal").classList.contains("open")) return;
+  if (e.key === "ArrowLeft") go(-1);
+  if (e.key === "ArrowRight") go(1);
+});
+
+/* 卡片 → 弹层 */
+const modal = document.getElementById("promptModal");
+const pmNum = document.getElementById("pmNum");
+const pmName = document.getElementById("pmName");
+const pmKind = document.getElementById("pmKind");
+const pmBody = document.getElementById("pmBody");
+const pmClose = document.getElementById("pmClose");
+const pmCopy = document.getElementById("pmCopy");
+
+function openModal(idx) {
+  const p = prompts[idx];
+  pmNum.textContent = p.num;
+  pmName.textContent = p.name;
+  pmKind.textContent = p.kind;
+  pmBody.textContent = p.body;
+  pmCopy.textContent = "复制提示词";
+  pmCopy.classList.remove("copied");
+  modal.classList.add("open");
+  modal.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+}
+function closeModal() {
+  modal.classList.remove("open");
+  modal.setAttribute("aria-hidden", "true");
+  document.body.style.overflow = "";
+}
+cards.forEach((c, i) => c.addEventListener("click", () => openModal(i)));
+pmClose.addEventListener("click", closeModal);
+modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
+window.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && modal.classList.contains("open")) closeModal();
+});
+
+/* 复制按钮 */
+pmCopy.addEventListener("click", async () => {
+  try {
+    await navigator.clipboard.writeText(pmBody.textContent);
+    pmCopy.textContent = "已复制 ✓";
+    pmCopy.classList.add("copied");
+    setTimeout(() => { pmCopy.textContent = "复制提示词"; pmCopy.classList.remove("copied"); }, 1600);
+  } catch {
+    // 降级：选中文字让用户手动复制
+    const r = document.createRange(); r.selectNodeContents(pmBody);
+    const s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+    pmCopy.textContent = "请按 ⌘C / Ctrl+C";
+    setTimeout(() => { pmCopy.textContent = "复制提示词"; s.removeAllRanges(); }, 2200);
+  }
+});
+
+layout();
+startAuto();   // 页面加载后开始 4 秒自动循环
+
+/* ========== 控制台彩蛋 ========== */
+console.log(
+  "%c🪶 一封信。\n%c这是房语(Aing)的「关于」—— 关于他是谁，怎么走到这里，想做什么。\n%c慢慢读。",
+  "font-size:18px;font-weight:700;color:#1a1612;",
+  "font-size:12px;color:#5a5247;line-height:1.8;",
+  "font-size:11px;color:#a09a8c;letter-spacing:0.2em;font-style:italic;"
+);
+</script>
+</body>
+</html>

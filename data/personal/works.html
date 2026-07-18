@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>实战与实验室 · 房语 — Aing</title>
+<style>
+/* ============================================================
+   作品库 · 全屏轮播式（每件作品占满一屏）
+   区别于 prompts.html 的画廊：每屏聚焦一件作品 + 过程叙事
+   ============================================================ */
+:root {
+  --bg: #faf8f5;
+  --bg-deep: #f0ece5;
+  --fg: #1a1612;
+  --fg-soft: #5a5247;
+  --fg-muted: #a09a8c;
+  --amber: #d4913e;
+  --amber-glow: rgba(212, 145, 62, 0.18);
+  --hairline: rgba(26, 22, 18, 0.12);
+  --serif: "Songti SC", "Noto Serif SC", "Source Han Serif SC", Georgia, serif;
+  --serif-en: "Cormorant Garamond", "Garamond", Georgia, serif;
+  --sans: "PingFang SC", "Noto Sans SC", "Helvetica Neue", sans-serif;
+  --mono: "IBM Plex Mono", "SF Mono", "Menlo", monospace;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--serif);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  line-height: 1.7;
+}
+::selection { background: var(--fg); color: var(--bg); }
+
+/* 纸纹噪点 */
+body::before {
+  content:""; position:fixed; inset:0; z-index:9999; pointer-events:none; opacity:0.22;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.03 0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* 环境光晕 */
+#ambientGlow {
+  position:fixed; pointer-events:none; z-index:2;
+  width:600px; height:600px;
+  border-radius:50%;
+  background:radial-gradient(circle, var(--amber-glow) 0%, transparent 70%);
+  transform:translate(-50%, -50%);
+  opacity:0; transition:opacity 0.6s;
+  mix-blend-mode:multiply;
+}
+body:hover #ambientGlow { opacity:1; }
+
+/* 顶部导航 */
+#topNav {
+  position:fixed; top:0; left:0; right:0; z-index:9999;
+  display:flex; justify-content:space-between; align-items:center;
+  padding:14px 24px;
+  background:rgba(250, 248, 245, 0.85);
+  backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--hairline);
+  font-family:var(--mono); font-size:10px; letter-spacing:0.25em;
+  text-transform:uppercase;
+  margin-top:2px;
+}
+#topNav .nav-mark {
+  font-family:var(--serif); font-weight:900; font-size:14px;
+  color:var(--fg); letter-spacing:0.4em; text-transform:none;
+}
+#topNav .nav-links { display:flex; gap:28px; }
+#topNav .nav-links a {
+  text-decoration:none; color:var(--fg-muted);
+  transition:color 0.35s cubic-bezier(.22,1,.36,1);
+  position:relative;
+}
+#topNav .nav-links a:hover { color:var(--amber); }
+#topNav .nav-links a.active { color:var(--fg); }
+#topNav .nav-links a.active::after {
+  content:""; position:absolute; left:0; right:0; bottom:-6px;
+  height:1px; background:var(--amber);
+}
+@media (max-width:640px) {
+  #topNav { padding:10px 16px; font-size:9px; }
+  #topNav .nav-links { gap:18px; }
+  #topNav .nav-mark { font-size:12px; letter-spacing:0.3em; }
+}
+
+/* 进度线 */
+#progress {
+  position:fixed; top:0; left:0; height:2px; width:0%;
+  background:var(--amber); z-index:10000;
+  transition: width 0.08s linear;
+}
+
+/* 入场 */
+.reveal { opacity:0; transform:translateY(20px); transition:opacity 1s ease, transform 1s ease; }
+.reveal.in { opacity:1; transform:none; }
+
+/* ========== 页面切换动画 ========== */
+body { animation: pageEnter 0.55s cubic-bezier(.22,1,.36,1) both; }
+@keyframes pageEnter { from {opacity:0;transform:translateY(24px);} to {opacity:1;transform:none;} }
+body.page-leaving { animation: pageLeave 0.32s cubic-bezier(.4,0,.6,1) both; pointer-events:none; }
+@keyframes pageLeave { from {opacity:1;transform:none;} to {opacity:0;transform:translateY(-16px);} }
+
+/* ========== 右侧进度条 ========== */
+.scroll-progress {
+  position:fixed; right:24px; top:50%; transform:translateY(-50%);
+  z-index:100; display:flex; flex-direction:column; gap:18px;
+  font-family:var(--mono); font-size:9px; letter-spacing:0.2em;
+  color:var(--fg-muted);
+}
+.scroll-progress .sp-item {
+  display:flex; align-items:center; gap:10px; cursor:pointer;
+  transition:color 0.35s;
+}
+.scroll-progress .sp-item:hover,
+.scroll-progress .sp-item.active { color:var(--amber); }
+.scroll-progress .sp-num {
+  font-size:9px; letter-spacing:0.2em;
+}
+.scroll-progress .sp-dot {
+  width:6px; height:6px; border-radius:50%;
+  border:1px solid var(--fg-muted); background:transparent;
+  transition:all 0.35s cubic-bezier(.22,1,.36,1);
+}
+.scroll-progress .sp-item.active .sp-dot {
+  background:var(--amber); border-color:var(--amber);
+  transform:scale(1.6);
+}
+@media (max-width:900px) { .scroll-progress { display:none; } }
+
+/* ========== 作品屏（占满一屏） ========== */
+.work-screen {
+  min-height:100svh;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6vw;
+  align-items:center;
+  padding:18vh 12vw 10vh;
+  position:relative; z-index:1;
+  border-bottom:1px solid var(--hairline);
+}
+.work-screen:last-of-type { border-bottom:none; }
+
+/* 左右交替：奇数左图右文、偶数右图左文 */
+.work-screen.flip .work-image { order:2; }
+.work-screen.flip .work-text  { order:1; }
+
+/* 左侧大图 */
+.work-image {
+  width:100%; height:80vh; max-height:720px;
+  background:var(--bg-deep);
+  border:1px solid var(--hairline);
+  border-radius:6px;
+  overflow:hidden;
+  position:relative;
+  display:flex; align-items:center; justify-content:center;
+}
+.work-image img {
+  width:100%; height:100%; object-fit:cover;
+  display:block;
+}
+.work-image .wi-tag {
+  position:absolute; top:18px; left:18px;
+  font-family:var(--mono); font-size:10px; letter-spacing:0.2em;
+  background:var(--bg); color:var(--fg);
+  padding:6px 14px; border-radius:3px;
+}
+.work-image .wi-num {
+  position:absolute; bottom:18px; right:18px;
+  font-family:var(--serif-en); font-size:80px; font-weight:300;
+  color:var(--bg); text-shadow:0 2px 12px rgba(0,0,0,0.2);
+  line-height:1;
+}
+
+/* 右侧文字 */
+.work-text {
+  display:flex; flex-direction:column; gap:24px;
+}
+.work-label {
+  font-family:var(--mono); font-size:10px; letter-spacing:0.4em;
+  color:var(--amber); text-transform:uppercase;
+}
+.work-title {
+  font-family:var(--serif); font-weight:900;
+  font-size:clamp(36px, 5vw, 56px); line-height:1.15;
+  letter-spacing:-0.02em;
+  color:var(--fg);
+}
+.work-tag-row {
+  display:flex; gap:8px; flex-wrap:wrap;
+  margin-bottom:8px;
+}
+.work-tag {
+  font-family:var(--sans); font-size:11px; letter-spacing:0.05em;
+  padding:3px 10px; border-radius:4px;
+  background:var(--bg-deep); color:var(--fg-soft);
+}
+
+/* 过程 3 段：动机 / 过程 / 反思 */
+.work-process {
+  margin-top:24px;
+  display:flex; flex-direction:column; gap:18px;
+}
+.wp-item {
+  display:grid; grid-template-columns:80px 1fr; gap:20px;
+  align-items:start;
+}
+.wp-tag {
+  font-family:var(--mono); font-size:9px; letter-spacing:0.2em;
+  color:var(--amber); padding-top:4px;
+  text-transform:uppercase;
+}
+.wp-text {
+  font-family:var(--serif); font-size:15px; line-height:1.85;
+  color:var(--fg-soft);
+}
+.wp-text strong { color:var(--fg); font-weight:700; }
+
+/* 链接区 */
+.work-link {
+  margin-top:24px;
+  display:inline-flex; align-items:center; gap:10px;
+  font-family:var(--mono); font-size:11px; letter-spacing:0.25em;
+  color:var(--amber); text-decoration:none; text-transform:uppercase;
+  padding-bottom:4px;
+  border-bottom:1px solid var(--amber);
+  align-self:flex-start;
+  transition:transform 0.35s cubic-bezier(.22,1,.36,1);
+}
+.work-link:hover { transform:translateX(6px); }
+
+/* 翻屏控制 */
+.scroll-hint {
+  position:fixed; bottom:32px; left:50%; transform:translateX(-50%);
+  font-family:var(--mono); font-size:10px; letter-spacing:0.3em;
+  color:var(--fg-muted); text-transform:uppercase;
+  display:flex; flex-direction:column; align-items:center; gap:8px;
+  z-index:50; pointer-events:none;
+  animation:hintPulse 2.2s ease-in-out infinite;
+}
+.scroll-hint::after {
+  content:""; width:1px; height:24px; background:var(--fg-muted);
+}
+@keyframes hintPulse {
+  0%,100% { opacity:0.4; transform:translate(-50%, 0); }
+  50%     { opacity:1;   transform:translate(-50%, 4px); }
+}
+
+@media (max-width:768px) {
+  .work-screen { grid-template-columns:1fr; padding:14vh 6vw 8vh; gap:6vh; min-height:auto; }
+  .work-screen.flip .work-image,
+  .work-screen.flip .work-text { order:initial; }
+  .work-image { height:50vh; }
+  .wp-item { grid-template-columns:60px 1fr; gap:14px; }
+}
+
+/* ========== 项目档案：多图展示 ========== */
+.project-archive {
+  min-height:100svh; padding:14vh 8vw 12vh; position:relative; z-index:1;
+}
+.archive-head { max-width:980px; margin:0 auto 42px; }
+.archive-kicker { font-family:var(--mono); font-size:10px; letter-spacing:.35em; color:var(--amber); }
+.archive-title { margin-top:18px; font-size:clamp(38px,6vw,76px); line-height:1.08; font-weight:900; }
+.archive-intro { max-width:760px; margin-top:24px; color:var(--fg-soft); font-size:17px; line-height:1.9; }
+.archive-intro strong { color:var(--fg); }
+.archive-meta { display:flex; gap:10px; flex-wrap:wrap; margin-top:24px; }
+.archive-meta span { padding:5px 12px; background:var(--bg-deep); color:var(--fg-soft); font:11px var(--sans); border-radius:4px; }
+.archive-gallery { max-width:1100px; margin:0 auto; display:grid; grid-template-columns:repeat(12,1fr); grid-auto-rows:150px; gap:14px; }
+.gallery-item { border:1px solid var(--hairline); background:var(--bg-deep); padding:0; cursor:pointer; overflow:hidden; position:relative; grid-column:span 4; grid-row:span 2; }
+.gallery-item:first-child { grid-column:span 8; grid-row:span 4; }
+.gallery-item img { width:100%; height:100%; object-fit:contain; background:#071a43; display:block; transition:transform .5s cubic-bezier(.22,1,.36,1), filter .5s; }
+.gallery-item:hover img { transform:scale(1.025); filter:brightness(.88); }
+.gallery-index { position:absolute; left:12px; bottom:12px; padding:4px 8px; color:#fff; background:rgba(26,22,18,.72); font:10px var(--mono); letter-spacing:.15em; }
+.archive-note { max-width:1100px; margin:24px auto 0; color:var(--fg-muted); font:10px var(--mono); letter-spacing:.12em; }
+.smartstock-archive { background:linear-gradient(180deg, #f4f1eb 0%, #faf8f5 100%); }
+.smartstock-archive .archive-head { max-width:1100px; }
+.smartstock-archive .archive-kicker { color:#167bc0; }
+.smartstock-archive .archive-title { letter-spacing:-.035em; }
+.smartstock-gallery { grid-template-columns:repeat(10,1fr); grid-auto-rows:165px; }
+.smartstock-gallery .gallery-item { grid-column:span 5; background:#06152d; }
+.smartstock-gallery .gallery-item:first-child { grid-column:span 10; grid-row:span 3; }
+.smartstock-gallery .gallery-item img { background:#06152d; }
+.visual-atlas-archive { background:linear-gradient(135deg, #080b10 0%, #0d141d 55%, #11100f 100%); color:#f7f1e8; overflow:hidden; }
+.visual-atlas-archive::before { content:""; position:absolute; inset:0; pointer-events:none; background:radial-gradient(circle at 76% 16%, rgba(63,112,152,.2), transparent 32%), linear-gradient(90deg, transparent 0%, rgba(224,74,50,.08) 100%); }
+.visual-atlas-archive > * { position:relative; z-index:1; }
+.featured-project-bar { max-width:1200px; margin:0 auto 42px; display:flex; justify-content:space-between; gap:20px; color:rgba(247,241,232,.48); font:10px var(--mono); letter-spacing:.22em; }
+.featured-project-bar span:first-child { color:#ef543b; }
+.visual-atlas-hero { max-width:1200px; margin:0 auto; display:grid; grid-template-columns:minmax(0,1fr) minmax(260px,.72fr); gap:clamp(36px,6vw,84px); align-items:center; }
+.visual-atlas-archive .archive-head { max-width:none; margin:0; }
+.visual-atlas-archive .archive-kicker { color:#ef543b; }
+.visual-atlas-archive .archive-title { color:#f7f1e8; letter-spacing:-.045em; }
+.visual-atlas-archive .archive-title span { display:inline-block; margin-top:10px; color:#ef543b; font-size:.62em; letter-spacing:-.02em; }
+.visual-atlas-archive .archive-intro { max-width:640px; color:rgba(247,241,232,.68); }
+.visual-atlas-archive .archive-intro strong { color:#f7f1e8; }
+.visual-atlas-archive .archive-meta span { background:rgba(255,255,255,.045); border:1px solid rgba(255,255,255,.15); color:rgba(247,241,232,.72); }
+.visual-atlas-archive .work-link { color:#ef543b; border-color:#ef543b; }
+.visual-atlas-links { display:flex; flex-wrap:wrap; gap:24px; margin-top:6px; }
+.visual-atlas-links .work-link { margin-top:18px; }
+.visual-atlas-hero .visual-atlas-cover { grid-column:auto; grid-row:auto; width:min(100%, 540px); justify-self:end; aspect-ratio:2662 / 1486; border:1px solid rgba(255,255,255,.16); background:#05080c; box-shadow:0 24px 80px rgba(0,0,0,.42), 0 0 0 1px rgba(239,84,59,.16); }
+.visual-atlas-cover img { background:#05080c; object-fit:cover; }
+.visual-atlas-archive .gallery-index { background:rgba(0,0,0,.72); }
+.visual-atlas-thesis { max-width:1200px; margin:74px auto 0; display:grid; grid-template-columns:1.4fr repeat(3,1fr); border-top:1px solid rgba(255,255,255,.18); border-bottom:1px solid rgba(255,255,255,.18); }
+.visual-atlas-thesis-item { min-height:126px; padding:24px 24px 22px 0; border-right:1px solid rgba(255,255,255,.12); }
+.visual-atlas-thesis-item + .visual-atlas-thesis-item { padding-left:24px; }
+.visual-atlas-thesis-item:last-child { border-right:0; }
+.visual-atlas-thesis-label { color:#ef543b; font:10px var(--mono); letter-spacing:.16em; }
+.visual-atlas-thesis-item strong { display:block; margin-top:10px; color:#f7f1e8; font:34px var(--serif); letter-spacing:-.04em; }
+.visual-atlas-thesis-item p { margin-top:4px; color:rgba(247,241,232,.52); font-size:13px; }
+.visual-atlas-banner { max-width:1200px; margin:76px auto 0; display:grid; grid-template-columns:minmax(0,1.35fr) minmax(190px,.65fr); gap:28px; align-items:end; }
+.visual-atlas-banner .gallery-item { width:100%; aspect-ratio:1672 / 941; border:1px solid rgba(255,255,255,.14); background:#05080c; }
+.visual-atlas-banner .gallery-item img { background:#05080c; object-fit:cover; }
+.visual-atlas-banner-note { padding-bottom:14px; border-top:1px solid rgba(239,84,59,.65); padding-top:16px; color:rgba(247,241,232,.62); font:11px/1.9 var(--mono); letter-spacing:.08em; }
+.visual-atlas-cases { max-width:1200px; margin:80px auto 0; }
+.visual-atlas-cases-head { display:flex; justify-content:space-between; align-items:baseline; gap:24px; margin-bottom:24px; }
+.visual-atlas-cases-title { color:#f7f1e8; font-size:clamp(26px,3vw,42px); line-height:1.2; letter-spacing:-.04em; }
+.visual-atlas-cases-subtitle { color:rgba(247,241,232,.46); font:10px var(--mono); letter-spacing:.16em; }
+.visual-atlas-gallery { max-width:none; grid-template-columns:repeat(3,1fr); grid-auto-rows:auto; gap:14px; }
+.visual-atlas-gallery .gallery-item,
+.visual-atlas-gallery .gallery-item:first-child { grid-column:span 1; grid-row:auto; height:460px; border:1px solid rgba(255,255,255,.14); background:#f4f2ed; }
+.visual-atlas-gallery .gallery-item img { background:#f4f2ed; object-fit:contain; }
+.visual-atlas-archive .archive-note { color:rgba(247,241,232,.45); }
+.fangzi-skill-archive { background:linear-gradient(180deg, #fbf8f3 0%, #f5eee5 100%); }
+.fangzi-skill-hero { max-width:1200px; margin:0 auto; display:grid; grid-template-columns:minmax(0, 1fr) minmax(250px, 360px); gap:clamp(42px, 8vw, 112px); align-items:end; }
+.fangzi-skill-archive .archive-head { max-width:none; margin:0; }
+.fangzi-skill-archive .archive-kicker { color:#a84732; }
+.fangzi-skill-archive .archive-title { letter-spacing:-.045em; }
+.fangzi-skill-archive .archive-title span { display:inline-block; margin-top:14px; font-size:.58em; line-height:1.15; letter-spacing:-.025em; color:#a84732; }
+.fangzi-skill-archive .archive-intro { max-width:700px; }
+.fangzi-skill-archive .archive-meta span { background:rgba(168,71,50,.08); border:1px solid rgba(168,71,50,.16); color:#704338; }
+.fangzi-skill-principle { margin-top:30px; padding:17px 0; border-top:1px solid rgba(168,71,50,.32); border-bottom:1px solid rgba(168,71,50,.32); color:#a84732; font:12px var(--mono); letter-spacing:.14em; }
+.fangzi-skill-hero-media { width:100%; max-width:360px; justify-self:end; }
+.fangzi-skill-hero-media .gallery-item { display:block; width:100%; aspect-ratio:887 / 1774; border:1px solid rgba(65,42,31,.18); background:#f4eadf; box-shadow:0 18px 42px rgba(91,57,37,.16); }
+.fangzi-skill-hero-media .gallery-item img { background:#f4eadf; object-fit:cover; }
+.fangzi-skill-flow { max-width:1200px; margin:80px auto 0; display:grid; grid-template-columns:minmax(0,1fr) 220px; gap:28px; align-items:end; }
+.fangzi-skill-flow .gallery-item { width:100%; aspect-ratio:2172 / 724; border:1px solid rgba(65,42,31,.14); background:#fdfbf8; box-shadow:0 10px 28px rgba(91,57,37,.08); }
+.fangzi-skill-flow .gallery-item img { background:#fdfbf8; object-fit:cover; }
+.fangzi-skill-flow-note { border-top:1px solid rgba(168,71,50,.32); padding-top:16px; color:#806b5c; font:10px/1.8 var(--mono); letter-spacing:.1em; }
+.fangzi-skill-cases { max-width:1200px; margin:78px auto 0; }
+.fangzi-skill-cases-head { display:flex; align-items:baseline; justify-content:space-between; gap:24px; margin-bottom:24px; }
+.fangzi-skill-cases-title { font-size:clamp(26px,3vw,42px); line-height:1.2; letter-spacing:-.035em; }
+.fangzi-skill-cases-subtitle { color:#927d6d; font:10px var(--mono); letter-spacing:.16em; }
+.fangzi-skill-gallery { max-width:none; grid-template-columns:repeat(12,1fr); grid-auto-rows:auto; gap:14px; }
+.fangzi-skill-gallery .gallery-item,
+.fangzi-skill-gallery .gallery-item:first-child { grid-column:span 4; grid-row:auto; aspect-ratio:1672 / 941; border:1px solid rgba(65,42,31,.14); background:#fdfbf8; }
+.fangzi-skill-gallery .gallery-item img { background:#fdfbf8; object-fit:cover; }
+.fangzi-skill-archive .archive-note { color:#a84732; }
+@media (max-width:768px) {
+  .fangzi-skill-hero { grid-template-columns:1fr; gap:38px; }
+  .fangzi-skill-hero-media { max-width:min(78vw, 330px); justify-self:start; }
+  .fangzi-skill-principle { font-size:10px; letter-spacing:.08em; line-height:1.8; }
+  .fangzi-skill-flow { grid-template-columns:1fr; margin-top:54px; }
+  .fangzi-skill-flow-note { max-width:360px; }
+  .fangzi-skill-cases { margin-top:56px; }
+  .fangzi-skill-cases-head { display:block; }
+  .fangzi-skill-cases-subtitle { display:block; margin-top:10px; }
+  .fangzi-skill-gallery { grid-template-columns:1fr; }
+  .fangzi-skill-gallery .gallery-item,
+  .fangzi-skill-gallery .gallery-item:first-child { grid-column:1; }
+}
+.lightbox { position:fixed; inset:0; z-index:100000; display:none; align-items:center; justify-content:center; padding:64px 88px 72px; background:rgba(20,17,13,.96); }
+.lightbox.open { display:flex; }
+.lightbox img { display:block; width:min(92vw, 1280px); height:min(82vh, 820px); max-width:none; max-height:none; object-fit:contain; box-shadow:0 12px 50px rgba(0,0,0,.35); }
+.lightbox-close,.lightbox-prev,.lightbox-next { position:absolute; border:0; background:transparent; color:#fff; cursor:pointer; font:24px var(--mono); opacity:.8; }
+.lightbox-close { top:24px; right:30px; font-size:30px; }
+.lightbox-prev { left:24px; top:50%; }
+.lightbox-next { right:24px; top:50%; }
+.lightbox-caption { position:absolute; bottom:22px; color:rgba(255,255,255,.65); font:10px var(--mono); letter-spacing:.2em; }
+body.lightbox-open { overflow:hidden; animation:none !important; transform:none !important; }
+@media (max-width:768px) { .project-archive { padding:12vh 6vw 9vh; } .archive-gallery { grid-template-columns:repeat(2,1fr); grid-auto-rows:110px; gap:8px; } .gallery-item,.gallery-item:first-child { grid-column:span 1; grid-row:span 2; } .gallery-item:first-child { grid-column:span 2; grid-row:span 3; } .archive-intro { font-size:15px; } .lightbox { padding:54px 34px 64px; } .lightbox img { width:92vw; height:78vh; } .lightbox-prev { left:10px; } .lightbox-next { right:10px; } }
+@media (max-width:768px) { .fangzi-skill-gallery { grid-auto-rows:auto; } }
+@media (max-width:768px) {
+  .featured-project-bar { display:block; line-height:2; margin-bottom:28px; }
+  .featured-project-bar span { display:block; }
+  .visual-atlas-hero { grid-template-columns:1fr; gap:40px; }
+  .visual-atlas-hero .visual-atlas-cover { width:100%; max-width:540px; justify-self:start; }
+  .visual-atlas-thesis { grid-template-columns:repeat(2,1fr); margin-top:54px; }
+  .visual-atlas-thesis-item { min-height:110px; padding:18px 14px 18px 0; }
+  .visual-atlas-thesis-item + .visual-atlas-thesis-item { padding-left:14px; }
+  .visual-atlas-thesis-item:nth-child(2) { border-right:0; }
+  .visual-atlas-thesis-item:nth-child(-n+2) { border-bottom:1px solid rgba(255,255,255,.12); }
+  .visual-atlas-banner { grid-template-columns:1fr; margin-top:54px; }
+  .visual-atlas-cases { margin-top:58px; }
+  .visual-atlas-cases-head { display:block; }
+  .visual-atlas-cases-subtitle { display:block; margin-top:10px; }
+  .visual-atlas-gallery { grid-template-columns:1fr; }
+  .visual-atlas-gallery .gallery-item,
+  .visual-atlas-gallery .gallery-item:first-child { grid-column:1; height:min(520px, 125vw); }
+}
+.legacy-work { display:none; }
+
+/* FOOTER */
+footer {
+  padding:8vh 8vw 12vh;
+  text-align:center;
+  position:relative; z-index:1;
+}
+footer .fine {
+  font-family:var(--mono); font-size:10px; letter-spacing:0.2em;
+  color:var(--fg-muted);
+}
+.back-home {
+  display:inline-block; margin-bottom:20px;
+  font-family:var(--mono); font-size:10px; letter-spacing:0.3em;
+  color:var(--fg-muted); text-decoration:none; text-transform:uppercase;
+  transition:color 0.35s;
+}
+.back-home:hover { color:var(--amber); }
+
+/* reduced-motion */
+@media (prefers-reduced-motion:reduce) {
+  .reveal { opacity:1; transform:none; transition:none; }
+  html { scroll-behavior:auto; }
+  body { animation:none !important; }
+}
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+<div id="ambientGlow"></div>
+<nav id="topNav" aria-label="主导航">
+  <span class="nav-mark">房  语</span>
+  <div class="nav-links">
+    <a href="index.html">主页</a>
+    <a href="about.html">关于</a>
+    <a href="prompts.html">AI 实验室</a>
+    <a href="works.html" class="active">作品</a>
+  </div>
+</nav>
+
+<!-- ========== 右侧进度条 ========== -->
+<aside class="scroll-progress" aria-label="作品进度">
+  <a class="sp-item active" data-target="visual-atlas" href="#visual-atlas">
+    <span class="sp-num">01</span><span class="sp-dot"></span>
+  </a>
+  <a class="sp-item" data-target="fangyu-xiaohei" href="#fangyu-xiaohei">
+    <span class="sp-num">02</span><span class="sp-dot"></span>
+  </a>
+  <a class="sp-item" data-target="resource-platform" href="#resource-platform">
+    <span class="sp-num">03</span><span class="sp-dot"></span>
+  </a>
+  <a class="sp-item" data-target="smartstock" href="#smartstock">
+    <span class="sp-num">04</span><span class="sp-dot"></span>
+  </a>
+</aside>
+
+<section class="project-archive visual-atlas-archive" id="visual-atlas">
+  <div class="featured-project-bar">
+    <span>FEATURED PROJECT · 01</span>
+    <span>VISUAL ARCHIVE / AI IMAGE INTELLIGENCE</span>
+  </div>
+  <div class="visual-atlas-hero">
+    <div class="archive-head">
+      <span class="archive-kicker">PROJECT 01 · VISUAL ARCHIVE · AI PRODUCT</span>
+      <h1 class="archive-title">Visual Atlas<span>视觉图鉴</span></h1>
+      <p class="archive-intro"><strong>一座持续生长的视觉档案库。</strong>它把 AI 图像案例、Prompt、视觉结构和可复用模板放在同一个可以浏览、拆解、测试的系统里。</p>
+      <p class="archive-intro">Visual Atlas 不是一个简单的图片瀑布流，也不是一个堆满提示词的收藏夹。它尝试回答一个更具体的问题：当我们看到一张好图时，能不能看懂它为什么成立，并把背后的结构带走？</p>
+      <div class="archive-meta"><span>AI 产品</span><span>视觉研究</span><span>Prompt Engineering</span><span>内容系统</span></div>
+      <div class="visual-atlas-links">
+        <a class="work-link" href="https://www.fangyuai.xyz" target="_blank" rel="noopener">浏览 Visual Atlas ↗</a>
+        <a class="work-link" href="https://github.com/fuxiworkspace-lgtm/gpt-image2-visual-atlas" target="_blank" rel="noopener">查看 GitHub 项目 ↗</a>
+      </div>
+    </div>
+    <button class="gallery-item visual-atlas-cover" data-index="0" aria-label="查看 Visual Atlas 项目封面">
+      <img src="assets/works/visual-atlas/01-cover.png" alt="Visual Atlas 视觉图鉴项目封面">
+      <span class="gallery-index">01 / 05 · COVER</span>
+    </button>
+  </div>
+  <div class="visual-atlas-thesis">
+    <div class="visual-atlas-thesis-item"><span class="visual-atlas-thesis-label">PRODUCT LOGIC</span><strong>Look → Read → Remix</strong><p>看见、拆解、复用。</p></div>
+    <div class="visual-atlas-thesis-item"><span class="visual-atlas-thesis-label">CASES</span><strong>511+</strong><p>视觉案例</p></div>
+    <div class="visual-atlas-thesis-item"><span class="visual-atlas-thesis-label">CATEGORIES</span><strong>13</strong><p>内容分类</p></div>
+    <div class="visual-atlas-thesis-item"><span class="visual-atlas-thesis-label">TEMPLATES</span><strong>20+</strong><p>工业级模板</p></div>
+  </div>
+  <div class="visual-atlas-banner">
+    <button class="gallery-item" data-index="1" aria-label="查看 Visual Atlas 夜间视觉档案氛围图">
+      <img src="assets/works/visual-atlas/02-hero.png" alt="Visual Atlas 夜间视觉档案氛围图">
+      <span class="gallery-index">02 / 05 · ATMOSPHERE</span>
+    </button>
+    <p class="visual-atlas-banner-note">生成式图像真正的挑战，不只是生成一张图，而是理解主体安排、光线情绪、材质描述、图文秩序，以及 Prompt 如何从描述转化为可重复的指令。</p>
+  </div>
+  <div class="visual-atlas-cases">
+    <div class="visual-atlas-cases-head">
+      <h2 class="visual-atlas-cases-title">把一张图，变成一套可以复用的视觉方法</h2>
+      <span class="visual-atlas-cases-subtitle">CASE STUDIES · STRUCTURE · REUSE</span>
+    </div>
+    <div class="archive-gallery visual-atlas-gallery" aria-label="Visual Atlas 视觉案例图片">
+      <button class="gallery-item" data-index="2"><img src="assets/works/visual-atlas/03-case-city.jpg" alt="Visual Atlas 城市生命系统图谱案例"><span class="gallery-index">03 / 05 · CITY SYSTEM</span></button>
+      <button class="gallery-item" data-index="3"><img src="assets/works/visual-atlas/04-case-quest.jpg" alt="Visual Atlas Meta Quest 产品结构拆解案例"><span class="gallery-index">04 / 05 · PRODUCT STRUCTURE</span></button>
+      <button class="gallery-item" data-index="4"><img src="assets/works/visual-atlas/05-case-packaging.jpg" alt="Visual Atlas 包装与材质说明案例"><span class="gallery-index">05 / 05 · MATERIAL STUDY</span></button>
+    </div>
+  </div>
+  <p class="archive-note">视觉档案 · 案例拆解 · Prompt · 模板 · Agent Skill · 让理解继续生长</p>
+</section>
+
+<section class="project-archive fangzi-skill-archive" id="fangyu-xiaohei">
+  <div class="fangzi-skill-hero">
+    <div class="archive-head">
+      <span class="archive-kicker">PROJECT 02 · OPEN SOURCE VISUAL SKILL · GITHUB</span>
+      <h1 class="archive-title">房语小黑<span>让内容穿上颜色，开始行动。</span></h1>
+      <p class="archive-intro"><strong>一个面向 AI 内容创作的视觉 Skill。</strong></p>
+      <p class="archive-intro">这不是一套固定的角色插画。它把文章、观点、项目复盘、活动流程和个人经历，变成一个有角色、有动作、有情绪、有真实物件的视觉现场。</p>
+      <p class="archive-intro">它是一套可以持续生长的内容视觉系统。</p>
+      <p class="fangzi-skill-principle">真实物件 × 物理动作 × 智能角色路由</p>
+      <p class="archive-intro">输入一篇文章，Skill 会判断它的情绪、动作、角色关系和叙事方向，再让合适的小黑进入现场。让内容穿上颜色。</p>
+      <div class="archive-meta"><span>Open Source</span><span>Visual Skill</span><span>Character Routing</span><span>Content System</span></div>
+      <a class="work-link" href="https://github.com/fuxiworkspace-lgtm/fangyu-xiaohei-cat-character" target="_blank" rel="noopener">查看 GitHub 仓库 ↗</a>
+    </div>
+    <div class="fangzi-skill-hero-media">
+    <button class="gallery-item" data-index="5" aria-label="查看房语小黑项目封面">
+        <img src="assets/works/fangyu-xiaohei/01-cover.png" alt="房语小黑，让内容穿上颜色，开始行动。">
+        <span class="gallery-index">01 / 05 · COVER</span>
+      </button>
+    </div>
+  </div>
+  <div class="fangzi-skill-flow">
+    <button class="gallery-item" data-index="6" aria-label="查看房语小黑内容视觉系统流程图">
+      <img src="assets/works/fangyu-xiaohei/02-system-flow.png" alt="房语小黑内容视觉系统流程：从文章到行动">
+      <span class="gallery-index">02 / 05 · SYSTEM</span>
+    </button>
+    <p class="fangzi-skill-flow-note">一篇文章进入系统之后，不再只是等待一张配图，而是经过情绪、动作、角色关系和叙事方向的判断，进入一个可行动的视觉现场。</p>
+  </div>
+  <div class="fangzi-skill-cases">
+    <div class="fangzi-skill-cases-head">
+      <h2 class="fangzi-skill-cases-title">小黑如何进入现场</h2>
+      <span class="fangzi-skill-cases-subtitle">CASE SCENES · REAL OBJECTS · PHYSICAL ACTIONS</span>
+    </div>
+    <div class="archive-gallery fangzi-skill-gallery" aria-label="房语小黑项目案例图片">
+      <button class="gallery-item" data-index="7"><img src="assets/works/fangyu-xiaohei/03-workbench.png" alt="房语小黑在工程协作现场中拆解和连接线路"><span class="gallery-index">03 / 05</span></button>
+      <button class="gallery-item" data-index="8"><img src="assets/works/fangyu-xiaohei/04-market-review.png" alt="房语小黑用真实物件表现市场复盘现场"><span class="gallery-index">04 / 05</span></button>
+      <button class="gallery-item" data-index="9"><img src="assets/works/fangyu-xiaohei/05-ai-lab.png" alt="房语小黑表现全球 AI 主题与机会判断"><span class="gallery-index">05 / 05</span></button>
+    </div>
+  </div>
+  <p class="archive-note">文章拆解 · 情绪判断 · 角色路由 · 物理动作 · 视觉交付 · 点击图片查看完整大图</p>
+</section>
+
+<section class="project-archive" id="resource-platform">
+  <div class="archive-head">
+    <span class="archive-kicker">PROJECT 03 · PRODUCT PLATFORM · 2026</span>
+    <h1 class="archive-title">社会资源协同服务平台<br>「资源通」</h1>
+    <p class="archive-intro"><strong>社会资源调度操作系统</strong>，是一个由 AI 驱动的跨行业资源撮合与协作平台。平台以每一个会员企业的当前目标为中心，通过动态标签、产业链图谱、专家顾问、虚拟产业联盟和联合会审核机制，自动发现企业之间的能力互补、供需关系、技术合作、资本连接和信任路径。</p>
+    <p class="archive-intro">它不是通讯录，也不是信息发布平台，而是把分散的校友资源、企业资源和合作机会，转化为可识别、可匹配、可解释、可审核、可持续沉淀的智能资源网络。</p>
+    <div class="archive-meta"><span>AI Platform</span><span>Resource Matching</span><span>Product Design</span><span>System Concept</span></div>
+  </div>
+  <div class="archive-gallery" aria-label="资源通项目图片">
+    <button class="gallery-item" data-index="10"><img src="assets/works/ziyuantong/01.png" alt="资源通产品介绍封面"><span class="gallery-index">01 / 06</span></button>
+    <button class="gallery-item" data-index="11"><img src="assets/works/ziyuantong/02.png" alt="资源通平台概念"><span class="gallery-index">02 / 06</span></button>
+    <button class="gallery-item" data-index="12"><img src="assets/works/ziyuantong/03.png" alt="资源通协同网络"><span class="gallery-index">03 / 06</span></button>
+    <button class="gallery-item" data-index="13"><img src="assets/works/ziyuantong/04.png" alt="资源通首页总览与产业链图谱"><span class="gallery-index">04 / 06</span></button>
+    <button class="gallery-item" data-index="14"><img src="assets/works/ziyuantong/05.png" alt="资源通个人资源矩阵与商机大厅"><span class="gallery-index">05 / 06</span></button>
+    <button class="gallery-item" data-index="15"><img src="assets/works/ziyuantong/06.png" alt="资源通全册系统预览"><span class="gallery-index">06 / 06</span></button>
+  </div>
+  <p class="archive-note">让资源被看见，让关系被激活，让合作真正发生。 · 点击任意图片查看大图</p>
+</section>
+
+<section class="project-archive smartstock-archive" id="smartstock">
+  <div class="archive-head">
+    <span class="archive-kicker">PROJECT 04 · AI RESEARCH PLATFORM · SMARTSTOCK</span>
+    <h2 class="archive-title">SmartStock<br>AI 全域智能投研决策平台</h2>
+    <p class="archive-intro"><strong>SmartStock</strong> 服务于高阶个人研究者、投研从业者、自媒体团队及小型机构，融合大数据、深度学习、量化因子模型与 NLP 语义解析，以数据驱动、模型迭代、客观研判为核心，系统性替代传统人工复盘。</p>
+    <p class="archive-intro">平台覆盖全市场数据、自动化统计、单股智能分析、A 股全栈、历史复盘与合规营销，致力于降低主观偏差，提升投研决策的理性水平。</p>
+    <div class="archive-meta"><span>AI Research</span><span>Quantitative Models</span><span>NLP</span><span>Decision Support</span></div>
+  </div>
+  <div class="archive-gallery smartstock-gallery" aria-label="SmartStock 项目图片">
+    <button class="gallery-item" data-index="16"><img src="assets/works/smartstock/01.png" alt="SmartStock 产品封面"><span class="gallery-index">01 / 05</span></button>
+    <button class="gallery-item" data-index="17"><img src="assets/works/smartstock/02.png" alt="SmartStock 平台定位与核心价值"><span class="gallery-index">02 / 05</span></button>
+    <button class="gallery-item" data-index="18"><img src="assets/works/smartstock/03.png" alt="SmartStock 单股智能分析与 A 股全栈"><span class="gallery-index">03 / 05</span></button>
+    <button class="gallery-item" data-index="19"><img src="assets/works/smartstock/04.png" alt="SmartStock 大盘复盘与历史分析"><span class="gallery-index">04 / 05</span></button>
+    <button class="gallery-item" data-index="20"><img src="assets/works/smartstock/05.png" alt="SmartStock 全册系统预览"><span class="gallery-index">05 / 05</span></button>
+  </div>
+  <p class="archive-note">数据驱动 · 模型迭代 · 客观研判 · 点击图片查看完整大图</p>
+</section>
+
+<!-- ========== 作品 01 ========== -->
+<section class="work-screen legacy-work" id="w1">
+  <div class="work-image">
+        <span class="wi-tag">2014—2017 · INTERNET · ECOMMERCE</span>
+    <img src="assets/headshot-wsj.jpg" alt="个人网站">
+    <span class="wi-num">01</span>
+  </div>
+  <div class="work-text">
+        <span class="work-label reveal">CASE 01 · 互联网商业化</span>
+        <h2 class="work-title reveal d1">互联网电商项目</h2>
+    <div class="work-tag-row reveal d2">
+      <span class="work-tag">Ecommerce</span>
+      <span class="work-tag">Operations</span>
+      <span class="work-tag">Fundraising</span>
+    </div>
+
+    <div class="work-process">
+      <div class="wp-item reveal d2">
+        <span class="wp-tag">动机</span>
+        <p class="wp-text">移动互联网红利期，电商模式快速迭代。我从核心运营走向项目牵头，参与业务商业化。</p>
+      </div>
+      <div class="wp-item reveal d3">
+        <span class="wp-tag">过程</span>
+        <p class="wp-text">围绕用户、渠道、内容与转化组织运营动作，把想法推进成可验证的项目。</p>
+      </div>
+      <div class="wp-item reveal d3">
+        <span class="wp-tag">反思</span>
+        <p class="wp-text">主导项目在毕业次年获得<strong>百万级天使投资</strong>，完成从运营执行到项目主导的跃迁。</p>
+      </div>
+    </div>
+
+        <a class="work-link reveal d3" href="about.html">看完整履历 →</a>
+  </div>
+</section>
+
+<!-- ========== 作品 02 ========== -->
+<section class="work-screen flip legacy-work" id="w2">
+  <div class="work-image">
+        <span class="wi-tag">2017—2021 · BLOCKCHAIN · ASSETS</span>
+    <div style="color:var(--fg-muted);font-size:14px;letter-spacing:0.3em;font-family:var(--mono);">[ 缩略图占位 ]</div>
+    <span class="wi-num">02</span>
+  </div>
+  <div class="work-text">
+        <span class="work-label reveal">CASE 02 · 区块链周期</span>
+        <h2 class="work-title reveal d1">区块链与数字资产实践</h2>
+    <div class="work-tag-row reveal d2">
+      <span class="work-tag">Blockchain</span>
+      <span class="work-tag">Entrepreneurship</span>
+      <span class="work-tag">Cycle</span>
+    </div>
+
+    <div class="work-process">
+      <div class="wp-item reveal d2">
+        <span class="wp-tag">动机</span>
+        <p class="wp-text">区块链技术引爆资产数字化浪潮，我从行业从业者转型为创业者，寻找技术与资产之间的真实连接。</p>
+      </div>
+      <div class="wp-item reveal d3">
+        <span class="wp-tag">过程</span>
+        <p class="wp-text">在高增长与剧烈调整之间做判断，经历从 0 到 1 的项目闭环与资源组织。</p>
+      </div>
+      <div class="wp-item reveal d3">
+        <span class="wp-tag">反思</span>
+        <p class="wp-text">获得个人资产的重要跃迁，达到<strong>A8 级别</strong>；也更深刻地理解了周期、风险与执行。</p>
+      </div>
+    </div>
+
+        <a class="work-link reveal d3" href="about.html">看我的判断 →</a>
+  </div>
+</section>
+
+<!-- ========== 作品 03 ========== -->
+<section class="work-screen legacy-work" id="w3">
+  <div class="work-image">
+        <span class="wi-tag">2023—NOW · AI · AGENT · BUILDING</span>
+    <div style="color:var(--fg-muted);font-size:14px;letter-spacing:0.3em;font-family:var(--mono);">[ 缩略图占位 ]</div>
+    <span class="wi-num">03</span>
+  </div>
+  <div class="work-text">
+        <span class="work-label reveal">CASE 03 · AI 深度耕耘</span>
+        <h2 class="work-title reveal d1">AI 投资与创业探索</h2>
+    <div class="work-tag-row reveal d2">
+      <span class="work-tag">AI</span>
+      <span class="work-tag">Hardware</span>
+      <span class="work-tag">Agent</span>
+    </div>
+
+    <div class="work-process">
+      <div class="wp-item reveal d2">
+        <span class="wp-tag">动机</span>
+        <p class="wp-text">从算力与硬件基础设施出发，持续观察 AI 从工具走向生产力核心的路径。</p>
+      </div>
+      <div class="wp-item reveal d3">
+        <span class="wp-tag">过程</span>
+        <p class="wp-text">现在转向应用层、Agent 生态与 AI 原生内容创作，持续试用工具、组合工作流并寻找真实场景。</p>
+      </div>
+      <div class="wp-item reveal d3">
+        <span class="wp-tag">反思</span>
+        <p class="wp-text"><strong>不是重新开始，而是能力迁移</strong>：把运营、创业、硬件和资源整合经验交给 AI 放大。</p>
+      </div>
+    </div>
+
+        <a class="work-link reveal d3" href="prompts.html">进入 AI 实验室 →</a>
+  </div>
+</section>
+
+<!-- ========== 滚动提示 ========== -->
+<div class="scroll-hint">向下滚动 · SCROLL</div>
+
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="项目图片预览">
+  <button class="lightbox-close" id="lightboxClose" aria-label="关闭">×</button>
+  <button class="lightbox-prev" id="lightboxPrev" aria-label="上一张">←</button>
+  <img id="lightboxImage" src="" alt="">
+  <button class="lightbox-next" id="lightboxNext" aria-label="下一张">→</button>
+  <div class="lightbox-caption" id="lightboxCaption"></div>
+</div>
+
+<!-- ========== FOOTER ========== -->
+<footer>
+  <a href="index.html" class="back-home">← 回到主页</a>
+  <p class="fine">© 2026 — 房语 Aing</p>
+</footer>
+
+<script>
+/* ========== 多图作品查看器 ========== */
+const galleryImages = [...document.querySelectorAll(".gallery-item img")];
+const lightbox = document.getElementById("lightbox");
+const lightboxImage = document.getElementById("lightboxImage");
+const lightboxCaption = document.getElementById("lightboxCaption");
+let galleryIndex = 0;
+function showGalleryImage(index) {
+  galleryIndex = (index + galleryImages.length) % galleryImages.length;
+  const image = galleryImages[galleryIndex];
+  lightboxImage.src = image.src;
+  lightboxImage.alt = image.alt;
+  lightboxCaption.textContent = `${String(galleryIndex + 1).padStart(2, "0")} / ${String(galleryImages.length).padStart(2, "0")} · ${image.alt}`;
+}
+function closeLightbox() { lightbox.classList.remove("open"); document.body.classList.remove("lightbox-open"); }
+document.querySelectorAll(".gallery-item").forEach(item => item.addEventListener("click", () => { showGalleryImage(Number(item.dataset.index)); lightbox.classList.add("open"); document.body.classList.add("lightbox-open"); }));
+document.getElementById("lightboxClose").addEventListener("click", closeLightbox);
+document.getElementById("lightboxPrev").addEventListener("click", () => showGalleryImage(galleryIndex - 1));
+document.getElementById("lightboxNext").addEventListener("click", () => showGalleryImage(galleryIndex + 1));
+lightbox.addEventListener("click", e => { if (e.target === lightbox) closeLightbox(); });
+document.addEventListener("keydown", e => { if (!lightbox.classList.contains("open")) return; if (e.key === "Escape") closeLightbox(); if (e.key === "ArrowLeft") showGalleryImage(galleryIndex - 1); if (e.key === "ArrowRight") showGalleryImage(galleryIndex + 1); });
+
+/* ========== 进度线 ========== */
+const p = document.getElementById("progress");
+window.addEventListener("scroll", () => {
+  const h = document.documentElement, max = h.scrollHeight - h.clientHeight;
+  p.style.width = (max > 0 ? (h.scrollTop / max) * 100 : 0) + "%";
+}, { passive: true });
+
+/* ========== 环境光晕 ========== */
+const glow = document.getElementById("ambientGlow");
+window.addEventListener("mousemove", (e) => {
+  glow.style.left = e.clientX + "px";
+  glow.style.top = e.clientY + "px";
+}, { passive: true });
+
+/* ========== 入场 ========== */
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
+}, { threshold: 0.12 });
+document.querySelectorAll(".reveal").forEach(el => io.observe(el));
+
+/* ========== 右侧进度 · 滚动同步 active ========== */
+const spItems = document.querySelectorAll(".scroll-progress .sp-item");
+const works = ["visual-atlas","fangyu-xiaohei","resource-platform","smartstock"].map(id => document.getElementById(id));
+
+function updateProgress() {
+  const mid = window.scrollY + window.innerHeight * 0.45;
+  let active = works[0];
+  works.forEach(w => { if (w && w.offsetTop <= mid) active = w; });
+  spItems.forEach(it => it.classList.toggle("active", it.dataset.target === active.id));
+}
+window.addEventListener("scroll", updateProgress, { passive: true });
+updateProgress();
+
+/* ========== 页面切换 ========== */
+(function () {
+  const isInterPageLink = (a) => {
+    if (!a || a.target === "_blank") return false;
+    if (a.hasAttribute("download")) return false;
+    if (a.pathname === location.pathname && !a.hash) return false;
+    if (a.pathname.endsWith(".html") && a.pathname !== location.pathname) return true;
+    return false;
+  };
+  document.addEventListener("click", (e) => {
+    const a = e.target.closest("a");
+    if (!a || !isInterPageLink(a)) return;
+    e.preventDefault();
+    document.body.classList.add("page-leaving");
+    setTimeout(() => { location.href = a.href; }, 280);
+  });
+})();
+
+/* ========== 键盘 ↑↓ 翻作品 ========== */
+window.addEventListener("keydown", (e) => {
+  const idx = works.findIndex(w => w && w.offsetTop <= window.scrollY + window.innerHeight * 0.45);
+  if (e.key === "ArrowDown" && idx < works.length - 1) {
+    e.preventDefault();
+    works[idx + 1].scrollIntoView({ behavior: "smooth" });
+  } else if (e.key === "ArrowUp" && idx > 0) {
+    e.preventDefault();
+    works[idx - 1].scrollIntoView({ behavior: "smooth" });
+  }
+});
+
+/* ========== 控制台彩蛋 ========== */
+console.log(
+  "%c🪶 作品。\n%c4 件做过的真东西 · 每件都有过程和反思。\n%c向下滚动 / 键盘 ↑↓ 切换。",
+  "font-size:18px;font-weight:700;color:#d4913e;",
+  "font-size:12px;color:#5a5247;line-height:1.8;",
+  "font-size:11px;color:#a09a8c;letter-spacing:0.2em;"
+);
+</script>
+</body>
+</html>

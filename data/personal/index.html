@@ -1,0 +1,1327 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>房语 — Aing</title>
+<style>
+/* ============================================================
+   概念：层次 · Layers
+   一个人有很多层 — 表面的身份、中层的技能、底层的信念
+   视觉上通过景深、透明度、滚动视差来表达"层层深入"
+   色板：暖灰底 / 炭黑字 / 琥珀点缀
+   字体：衬线标题 / 无衬线正文 / 等宽技术标签
+   ============================================================ */
+:root {
+  --bg: #faf8f5;
+  --bg-deep: #f0ece5;
+  --fg: #2c2416;
+  --fg-soft: #7a7265;
+  --fg-muted: #b0a99c;
+  --amber: #d4913e;
+  --amber-glow: rgba(212, 145, 62, 0.18);
+  --hairline: rgba(44, 36, 22, 0.1);
+  --serif: "Songti SC", "Noto Serif SC", "Source Han Serif SC", Georgia, serif;
+  --sans: "PingFang SC", "Noto Sans SC", "Helvetica Neue", sans-serif;
+  --mono: "IBM Plex Mono", "SF Mono", "Menlo", monospace;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+::selection { background: var(--amber); color: #fff; }
+
+/* 纸纹噪点 */
+body::before {
+  content:""; position:fixed; inset:0; z-index:3; pointer-events:none; opacity:0.38;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.03 0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ========== 通用：书脊/纸边/分割线 ========== */
+.hairline-strong { border-color: rgba(44, 36, 22, 0.18) !important; }
+.page-edge {
+  position:relative;
+}
+.page-edge::before,
+.page-edge::after {
+  content:""; position:absolute; left:0; right:0; height:1px;
+  background:linear-gradient(to right, transparent, var(--hairline) 18%, var(--hairline) 82%, transparent);
+}
+.page-edge::before { top:-1px; }
+.page-edge::after  { bottom:-1px; }
+
+.section-divider {
+  display:flex; align-items:center; justify-content:center; gap:14px;
+  margin:0 auto; padding:6vh 8vw;
+  font-family:var(--mono); font-size:10px; letter-spacing:0.4em;
+  color:var(--fg-muted); text-transform:uppercase;
+}
+.section-divider::before,
+.section-divider::after {
+  content:""; flex:0 0 36px; height:1px; background:var(--hairline);
+}
+.layer-mark {
+  font-family:var(--serif); font-weight:600; font-size:11px;
+  color:var(--amber); letter-spacing:0.15em;
+  display:inline-flex; align-items:center; gap:6px;
+}
+.layer-mark::before {
+  content:"·"; color:var(--fg-muted); font-size:14px; line-height:1;
+}
+
+/* ========== 最近更新 ========== */
+/* UPDATED 已合并到 #topNav 中，不再需要 fixed 定位 */
+#lastUpdated {
+  font-family:var(--mono); font-size:10px; letter-spacing:0.2em;
+  color:var(--fg-muted); text-transform:uppercase;
+  display:flex; align-items:center; gap:8px;
+}
+#lastUpdated::before {
+  content:""; width:5px; height:5px; border-radius:50%;
+  background:var(--amber); box-shadow:0 0 8px var(--amber-glow);
+  animation:dotPulse 2.6s ease-in-out infinite;
+}
+@keyframes fadeIn { to { opacity:1; } }
+@keyframes dotPulse {
+  0%,100% { opacity:0.55; transform:1; }
+  50%     { opacity:1;    transform:scale(1.35); }
+}
+
+/* ========== 顶部横向导航条 ========== */
+#topNav {
+  position:fixed; top:0; left:0; right:0; z-index:9999;
+  display:flex; justify-content:space-between; align-items:center;
+  padding:14px 24px 14px 24px;
+  background:rgba(250, 248, 245, 0.85);
+  backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--hairline);
+  font-family:var(--mono); font-size:10px; letter-spacing:0.25em;
+  text-transform:uppercase;
+  /* 让出顶部 2px 给进度线 */
+  margin-top:2px;
+}
+#topNav .nav-mark {
+  font-family:var(--serif); font-weight:900; font-size:14px;
+  color:var(--fg); letter-spacing:0.4em; text-transform:none;
+}
+#topNav .nav-links { display:flex; gap:28px; }
+#topNav .nav-links a {
+  text-decoration:none; color:var(--fg-muted);
+  transition:color 0.35s cubic-bezier(.22,1,.36,1);
+  position:relative;
+}
+#topNav .nav-links a:hover { color:var(--amber); }
+#topNav .nav-links a.active { color:var(--fg); }
+#topNav .nav-links a.active::after {
+  content:""; position:absolute; left:0; right:0; bottom:-6px;
+  height:1px; background:var(--amber);
+}
+@media (max-width:640px) {
+  #topNav { padding:10px 16px; font-size:9px; }
+  #topNav .nav-links { gap:18px; }
+  #topNav .nav-mark { font-size:12px; letter-spacing:0.3em; }
+  #lastUpdated { font-size:9px; letter-spacing:0.18em; }
+  #progress { top:0; }
+}
+
+/* ========== 扉页 ========== */
+/* ========== 扉页 · 两列布局（左大字卷首语 / 右目录）========== */
+#frontispiece {
+  min-height:100svh;
+  display:flex; align-items:center; justify-content:center;
+  padding:14vh 8vw 10vh; background:var(--bg-deep);
+  position:relative; z-index:1;
+  overflow:hidden;
+  transition: filter 0.4s, opacity 0.4s, transform 0.4s;
+}
+.frontispiece-inner {
+  width:100%; max-width:1100px;
+  display:grid;
+  grid-template-columns:1.3fr 1fr;
+  gap:8vw;
+  align-items:center;
+}
+/* 扉页双层纸边 */
+#frontispiece::before {
+  content:""; position:absolute; inset:18px;
+  border:1px solid var(--hairline); pointer-events:none;
+}
+#frontispiece::after {
+  content:""; position:absolute; inset:32px;
+  border:1px solid rgba(44,36,22,0.05); pointer-events:none;
+}
+/* 顶部刊号 — 横跨两列 */
+.fp-top {
+  grid-column:1 / -1;
+  display:flex; justify-content:space-between; align-items:baseline;
+  font-family:var(--mono); font-size:11px; letter-spacing:0.3em;
+  color:var(--fg-muted); text-transform:uppercase;
+  padding-bottom:24px; border-bottom:1px solid var(--hairline);
+  margin-bottom:-2vh;
+}
+.fp-mark {
+  font-family:var(--serif); font-weight:900; font-size:18px;
+  color:var(--fg); letter-spacing:0.6em;
+}
+/* 左列：卷首语大字 */
+.fp-left {
+  display:flex; flex-direction:column; gap:24px;
+}
+.fp-epigraph {
+  font-family:var(--serif); font-weight:700;
+  font-size:clamp(28px, 4vw, 44px);
+  line-height:1.45; color:var(--fg);
+  letter-spacing:-0.01em;
+}
+.fp-quote {
+  color:var(--amber);
+  font-size:1.2em;
+  vertical-align:-0.15em;
+  padding:0 6px;
+  font-weight:900;
+}
+.fp-attribution {
+  font-family:var(--mono); font-size:10px;
+  letter-spacing:0.3em; color:var(--fg-muted);
+  text-transform:uppercase;
+}
+/* 右列：目录 */
+.fp-right {
+  display:flex; flex-direction:column; gap:0;
+}
+.fp-toc-label {
+  font-family:var(--mono); font-size:10px; letter-spacing:0.4em;
+  color:var(--amber); margin-bottom:18px; text-transform:uppercase;
+}
+.fp-toc {
+  border-top:1px solid var(--hairline); border-bottom:1px solid var(--hairline);
+  padding:0;
+}
+.fp-toc-item {
+  display:grid; grid-template-columns:32px 1fr auto auto;
+  align-items:baseline; gap:14px;
+  padding:18px 0; text-decoration:none; color:var(--fg-soft);
+  transition:padding 0.35s cubic-bezier(.22,1,.36,1), color 0.35s, background 0.35s;
+  border-bottom:1px dashed var(--hairline);
+}
+.fp-toc-item:last-child { border-bottom:none; }
+.fp-toc-item:hover {
+  padding-left:14px; padding-right:14px; margin:0 -14px;
+  background:var(--bg); color:var(--fg);
+}
+.fp-toc-num {
+  font-family:var(--mono); font-size:11px; letter-spacing:0.2em;
+  color:var(--amber);
+}
+.fp-toc-name {
+  font-family:var(--serif); font-size:clamp(15px, 1.5vw, 18px);
+  font-weight:600;
+}
+.fp-toc-dots {
+  flex:1; border-bottom:1px dotted var(--fg-muted); align-self:center;
+  height:1px; margin:0 4px;
+}
+.fp-toc-page {
+  font-family:var(--mono); font-size:10px; letter-spacing:0.2em;
+  color:var(--fg-muted);
+}
+/* 进入按钮 — 整页底部居中 */
+.fp-enter-wrap {
+  grid-column:1 / -1;
+  display:flex; justify-content:center;
+  margin-top:6vh;
+}
+/* 进入按钮 */
+.fp-enter {
+  align-self:center; display:inline-flex; align-items:center; gap:14px;
+  padding:12px 28px; border:1px solid var(--fg);
+  text-decoration:none; color:var(--fg);
+  font-family:var(--mono); font-size:11px; letter-spacing:0.4em;
+  text-transform:uppercase;
+  transition:all 0.4s cubic-bezier(.22,1,.36,1);
+}
+.fp-enter:hover {
+  background:var(--fg); color:var(--bg);
+}
+.fp-enter-arrow {
+  display:inline-block; transition:transform 0.4s cubic-bezier(.22,1,.36,1);
+}
+.fp-enter:hover .fp-enter-arrow { transform:translateY(4px); }
+
+/* 扉页滚动退出：渐渐模糊+下沉 */
+#frontispiece.fp-out {
+  opacity:0.35; filter:blur(2px); transform:scale(0.985);
+}
+@media (max-width:768px) {
+  .frontispiece-inner { grid-template-columns:1fr; gap:5vh; }
+  .fp-top { padding-bottom:16px; margin-bottom:0; }
+  .fp-epigraph { font-size:clamp(24px, 6vw, 32px); }
+  .fp-enter-wrap { margin-top:2vh; }
+}
+@media (max-width:640px) {
+  #frontispiece { padding:10vh 6vw; }
+  #frontispiece::before { inset:10px; }
+  #frontispiece::after { inset:18px; }
+  .frontispiece-inner { gap:4vh; }
+  .fp-toc-item { grid-template-columns:24px 1fr auto; gap:10px; }
+  .fp-toc-page { display:none; }
+  .fp-toc-dots { display:none; }
+}
+
+/* ========== 右侧 mini-toc ========== */
+#miniToc {
+  position:fixed; top:50%; right:24px; transform:translateY(-50%);
+  z-index:9998; display:flex; flex-direction:column; gap:14px;
+  font-family:var(--mono); font-size:10px; letter-spacing:0.2em;
+  pointer-events:auto;
+}
+.mt-item {
+  display:flex; align-items:center; gap:10px;
+  text-decoration:none; color:var(--fg-muted);
+  transition:color 0.35s cubic-bezier(.22,1,.36,1);
+  cursor:pointer;
+}
+.mt-item .mt-num {
+  font-size:9px; letter-spacing:0.2em;
+  color:var(--fg-muted);
+  transition:color 0.35s;
+}
+.mt-item .mt-dot {
+  width:6px; height:6px; border-radius:50%;
+  border:1px solid var(--fg-muted);
+  background:transparent;
+  transition:all 0.35s cubic-bezier(.22,1,.36,1);
+}
+.mt-item .mt-name {
+  opacity:0; transform:translateX(-6px);
+  transition:opacity 0.35s, transform 0.35s cubic-bezier(.22,1,.36,1);
+  white-space:nowrap; padding-right:4px;
+}
+.mt-item:hover .mt-name,
+.mt-item.active .mt-name { opacity:1; transform:translateX(0); }
+.mt-item:hover .mt-dot,
+.mt-item.active .mt-dot {
+  background:var(--amber); border-color:var(--amber);
+  transform:scale(1.4);
+}
+.mt-item:hover .mt-num,
+.mt-item.active .mt-num { color:var(--amber); }
+
+@media (max-width:900px) { #miniToc { display:none; } }
+
+/* 光晕 — 跟随鼠标的环境光 */
+#ambientGlow {
+  position:fixed; pointer-events:none; z-index:2;
+  width:600px; height:600px;
+  border-radius:50%;
+  background:radial-gradient(circle, var(--amber-glow) 0%, transparent 70%);
+  transform:translate(-50%, -50%);
+  opacity:0; transition:opacity 0.6s;
+  mix-blend-mode:multiply;
+}
+body:hover #ambientGlow { opacity:1; }
+
+/* 滚动进度线 */
+#progress {
+  position:fixed; top:0; left:0; height:2px; width:0%;
+  background:var(--amber); z-index:10000;
+  transition: width 0.08s linear;
+}
+
+/* ========== 入场动画 ========== */
+.reveal { opacity:0; transform:translateY(40px); transition:opacity 0.8s cubic-bezier(.22,1,.36,1), transform 0.8s cubic-bezier(.22,1,.36,1); }
+.reveal.in { opacity:1; transform:none; }
+.reveal.d1 { transition-delay:0.1s; }
+.reveal.d2 { transition-delay:0.2s; }
+.reveal.d3 { transition-delay:0.32s; }
+
+/* ========== HERO ========== */
+#hero {
+  min-height:100svh; display:flex; flex-direction:column; justify-content:center;
+  padding:0 8vw; position:relative; z-index:1;
+}
+.hero-greeting {
+  font-family:var(--mono); font-size:11px; letter-spacing:0.4em; color:var(--fg-muted);
+  margin-bottom:4vh; text-transform:uppercase;
+}
+.hero-name {
+  font-family:var(--serif); font-weight:900;
+  font-size:clamp(64px, 14vw, 160px);
+  line-height:0.92; letter-spacing:-0.03em;
+  margin-bottom:2vh;
+}
+.hero-name .char {
+  display:inline-block; transition:transform 0.5s cubic-bezier(.34,1.56,.64,1), color 0.4s;
+  cursor:default;
+}
+.hero-name .char:hover { transform:translateY(-12px); color:var(--amber); }
+.hero-tagline {
+  max-width:920px;
+  display:grid; grid-template-columns:minmax(130px, .25fr) minmax(0, 1fr);
+  column-gap:32px; row-gap:8px; align-items:baseline;
+  color:var(--fg-soft);
+}
+.hero-tagline-label {
+  font-family:var(--mono); font-size:10px; letter-spacing:.22em;
+  color:var(--amber); text-transform:uppercase;
+  padding-top:8px;
+}
+.hero-tagline-copy {
+  font-family:var(--serif); font-size:clamp(18px, 2.5vw, 28px);
+  line-height:1.55; letter-spacing:-.01em;
+}
+.hero-tagline-copy em {
+  color:var(--fg); font-style:normal;
+}
+.hero-tagline-sub {
+  grid-column:2; margin-top:14px; padding-top:14px;
+  border-top:1px solid var(--hairline);
+  font-family:var(--serif); font-size:clamp(22px, 3vw, 34px);
+  font-weight:600; line-height:1.3;
+  letter-spacing:.03em; color:var(--fg); text-transform:none;
+}
+.hero-positioning {
+  max-width:760px; margin-top:28px; padding-top:18px;
+  border-top:1px solid var(--hairline);
+  font-family:var(--serif); font-size:clamp(19px, 2.5vw, 27px);
+  line-height:1.5; color:var(--fg-soft); letter-spacing:.02em;
+}
+.hero-positioning::before {
+  content:"↗"; display:inline-block; margin-right:14px;
+  color:var(--amber); font-family:var(--mono); font-size:14px;
+}
+.hero-line {
+  width:60px; height:1px; background:var(--amber); margin:3vh 0;
+  transform-origin:left; animation:lineGrow 1.2s cubic-bezier(.22,1,.36,1) 0.3s both;
+}
+@keyframes lineGrow { from { transform:scaleX(0); } to { transform:scaleX(1); } }
+
+@media (max-width:640px) {
+  .hero-tagline { display:block; max-width:620px; }
+  .hero-tagline-label { display:block; margin-bottom:12px; }
+  .hero-tagline-copy { font-size:22px; line-height:1.6; }
+  .hero-tagline-sub { display:block; margin-top:14px; padding-top:12px; font-size:22px; line-height:1.4; }
+  .hero-positioning { margin-top:24px; font-size:21px; }
+}
+
+/* 滚动提示 */
+.scroll-hint {
+  position:absolute; bottom:4vh; left:8vw;
+  font-family:var(--mono); font-size:10px; letter-spacing:0.3em; color:var(--fg-muted);
+  display:flex; align-items:center; gap:12px;
+}
+.scroll-hint::after {
+  content:""; width:40px; height:1px; background:var(--fg-muted);
+  animation:hintPulse 2.2s ease-in-out infinite;
+}
+@keyframes hintPulse { 0%,100%{opacity:0.4;transform:scaleX(0.8);} 50%{opacity:1;transform:scaleX(1.4);} }
+
+/* ========== MARQUEE ========== */
+.marquee {
+  border-top:1px solid var(--hairline); border-bottom:1px solid var(--hairline);
+  overflow:hidden; padding:18px 0; background:var(--bg-deep);
+  white-space:nowrap; position:relative; z-index:1;
+}
+.marquee-inner {
+  display:inline-block; white-space:nowrap;
+  animation:marquee 30s linear infinite;
+  font-family:var(--serif); font-weight:600;
+  font-size:clamp(16px, 2.2vw, 22px); letter-spacing:0.2em; color:var(--fg-soft);
+}
+.marquee-inner em { font-style:normal; color:var(--amber); font-family:var(--mono); font-size:0.55em; vertical-align:middle; margin:0 1.8em; }
+@keyframes marquee { from { transform:translateX(0); } to { transform:translateX(-50%); } }
+.marquee:hover .marquee-inner { animation-play-state:paused; }
+
+/* ========== 通用的 wrap 和标题 ========== */
+.wrap { max-width:880px; margin:0 auto; padding:0 8vw; }
+section { position:relative; z-index:1; }
+.sec-label {
+  font-family:var(--mono); font-size:11px; letter-spacing:0.3em; color:var(--amber);
+  display:block; margin-bottom:20px;
+}
+.sec-heading {
+  font-family:var(--serif); font-weight:700;
+  font-size:clamp(28px, 5vw, 48px); line-height:1.3; margin-bottom:32px;
+  letter-spacing:-0.01em;
+}
+
+/* ========== §01 关于 ========== */
+#about { padding:20vh 0 12vh; }
+.about-grid {
+  display:grid; grid-template-columns:1fr 1fr; gap:10vh 6vw;
+  margin-top:6vh;
+}
+.about-grid p {
+  font-size:15px; line-height:2.1; color:var(--fg-soft);
+  letter-spacing:0.01em;
+  text-align:justify;
+  text-justify:inter-ideograph;
+}
+.about-grid .lead {
+  font-family:var(--serif); font-size:clamp(18px, 2.2vw, 24px);
+  color:var(--fg); line-height:1.7;
+  text-align:left;   /* 钩子句保持左对齐，更有呼吸 */
+}
+@media (max-width:640px) { .about-grid { grid-template-columns:1fr; gap:6vh; } }
+
+/* ========== §01.5 作品小节 ========== */
+#works-preview { padding:18vh 0 14vh; }
+.works-hint {
+  font-family:var(--mono); font-size:10px; letter-spacing:0.3em;
+  color:var(--fg-muted); margin-top:-12px; margin-bottom:6vh;
+  text-transform:uppercase;
+}
+.works-grid {
+  display:grid; grid-template-columns:repeat(3, 1fr);
+  gap:24px;
+  border-top:1px solid var(--hairline); padding-top:6vh;
+}
+.work-card {
+  position:relative;
+  display:flex; flex-direction:column; gap:8px;
+  padding:20px 0;
+  text-decoration:none; color:var(--fg);
+  transition:padding 0.35s cubic-bezier(.22,1,.36,1);
+}
+.work-card:hover { padding-left:14px; }
+.work-card .wc-num {
+  font-family:var(--mono); font-size:10px; letter-spacing:0.3em;
+  color:var(--amber);
+}
+.work-card .wc-title {
+  font-family:var(--serif); font-weight:700;
+  font-size:clamp(16px, 1.8vw, 20px); line-height:1.35;
+  color:var(--fg);
+}
+.work-card .wc-kind {
+  font-family:var(--mono); font-size:9px; letter-spacing:0.2em;
+  color:var(--fg-muted); text-transform:uppercase;
+}
+.work-card .wc-desc {
+  font-size:13px; line-height:1.7; color:var(--fg-soft);
+  margin-top:4px;
+}
+.work-card .wc-arrow {
+  position:absolute; right:0; top:20px;
+  font-family:var(--mono); color:var(--fg-muted); font-size:16px;
+  transition:transform 0.35s cubic-bezier(.22,1,.36,1), color 0.35s;
+}
+.work-card:hover .wc-arrow {
+  transform:translateX(8px); color:var(--amber);
+}
+@media (max-width:720px) {
+  .works-grid { grid-template-columns:1fr; gap:0; }
+}
+
+/* ========== §02 技能 — 标签云 ========== */
+#skills { padding:8vh 0 14vh; background:var(--bg-deep); }
+.skills-layers { display:flex; flex-direction:column; gap:7vh; margin-top:6vh; }
+.skills-tagline {
+  font-family:var(--serif); font-style:italic;
+  font-size:clamp(15px, 1.6vw, 17px); line-height:1.7;
+  color:var(--fg-soft); margin-top:12px; margin-bottom:0;
+  text-align:left;
+}
+.skills-quote {
+  margin-top:48px; padding:24px 28px;
+  border-left:2px solid var(--amber);
+  background:rgba(250,248,245,0.5);
+  font-family:var(--serif);
+  font-size:clamp(16px, 1.8vw, 19px); line-height:1.7;
+  color:var(--fg);
+}
+.skills-quote .sq-mark {
+  font-family:var(--mono); font-size:10px; letter-spacing:0.3em;
+  color:var(--amber); display:block; margin-bottom:10px; text-transform:uppercase;
+}
+.skill-row {
+  display:grid; grid-template-columns:160px 1fr; gap:32px;
+  align-items:start;
+}
+.skill-row-label {
+  font-family:var(--mono); font-size:11px; letter-spacing:0.25em;
+  color:var(--fg-muted); padding-top:8px;
+  text-transform:uppercase;
+  white-space:nowrap;
+  display:flex; align-items:baseline; gap:10px;
+}
+.skill-row-label .label-zh {
+  font-family:var(--serif); font-size:16px; font-weight:700;
+  letter-spacing:0.05em; color:var(--fg); text-transform:none;
+}
+.skill-row-label .label-en {
+  font-size:9px; letter-spacing:0.3em; color:var(--fg-muted);
+}
+.skill-row-label::before {
+  content:"·"; color:var(--amber); margin-right:6px; font-size:14px;
+}
+.skill-tags { display:flex; flex-wrap:wrap; gap:10px; }
+.tag {
+  font-family:var(--mono); font-size:13px; letter-spacing:0.06em;
+  padding:9px 20px; border-radius:999px;
+  border:1px solid var(--hairline); background:var(--bg);
+  color:var(--fg-soft); cursor:default;
+  transition:all 0.35s cubic-bezier(.22,1,.36,1);
+}
+/* 4 层差异化样式 */
+/* 在学：虚线胶囊（探索中） */
+.tag-learning { border-style:dashed; }
+/* 做过：实线浅灰（已验证） */
+.tag-shipped { /* 默认样式：实线浅灰底 */ }
+/* 正在连接：橙色细边（视觉重点） */
+.tag-connecting {
+  border-color:var(--amber); color:var(--amber);
+  background:rgba(212,145,62,0.06);
+}
+.tag-connecting:hover {
+  background:var(--amber); color:#fff;
+}
+/* 能教：深色边框（可输出） */
+.tag-teach {
+  background:transparent; border-color:var(--fg);
+  color:var(--fg); border-width:1.5px;
+}
+.tag-teach:hover { background:var(--fg); color:var(--bg); }
+
+.tag:hover {
+  background:var(--amber); color:#fff; border-color:var(--amber);
+  transform:translateY(-3px);
+  box-shadow:0 8px 24px var(--amber-glow);
+}
+@media (max-width:640px) {
+  .skill-row { grid-template-columns:1fr; gap:14px; }
+  .skill-row-label { padding-top:0; }
+}
+
+/* ========== "读完整介绍" 链接 ========== */
+.read-more {
+  display:inline-block; margin-top:24px;
+  font-family:var(--mono); font-size:11px; letter-spacing:0.25em;
+  color:var(--amber); text-decoration:none;
+  text-transform:uppercase;
+  padding-bottom:4px;
+  border-bottom:1px solid transparent;
+  transition:border-color 0.35s cubic-bezier(.22,1,.36,1), transform 0.35s;
+}
+.read-more:hover {
+  border-bottom-color:var(--amber);
+  transform:translateX(4px);
+}
+
+/* ========== §03 主营业务 ========== */
+#projects { padding:18vh 0 10vh; }
+.proj-list { margin-top:6vh; display:flex; flex-direction:column; }
+.proj {
+  display:grid; grid-template-columns:80px 1fr auto;
+  grid-auto-rows:auto;
+  gap:24px; align-items:baseline;
+  padding:32px 0; border-bottom:1px solid var(--hairline);
+  cursor:pointer;
+  transition:padding 0.35s, background 0.35s, margin 0.35s;
+}
+.proj.open { padding-left:16px; margin:0 -16px; padding-right:16px; border-radius:4px; background:var(--bg-deep); }
+.proj .idx { font-family:var(--mono); font-size:12px; color:var(--amber); letter-spacing:0.2em; align-self:start; }
+.proj h3 { font-family:var(--serif); font-size:clamp(18px, 2vw, 24px); margin-bottom:6px; }
+.proj .proj-body p { font-size:14px; color:var(--fg-soft); line-height:1.7; max-width:500px; }
+.proj .arrow {
+  font-family:var(--mono); color:var(--fg-muted); font-size:16px;
+  transition:transform 0.35s cubic-bezier(.22,1,.36,1), color 0.35s;
+  align-self:start;
+}
+.proj.open .arrow { transform:rotate(90deg); color:var(--amber); }
+.proj-notes {
+  grid-column:2 / 3;
+  max-height:0; overflow:hidden; opacity:0;
+  transition:max-height 0.5s cubic-bezier(.22,1,.36,1), opacity 0.4s, margin 0.4s;
+  margin-top:0;
+}
+.proj.open .proj-notes {
+  max-height:280px; opacity:1; margin-top:14px;
+  padding-top:16px; border-top:1px dashed var(--hairline);
+}
+.proj-notes-label {
+  display:block; font-family:var(--mono); font-size:10px; letter-spacing:0.3em;
+  color:var(--amber); margin-bottom:8px; text-transform:uppercase;
+}
+.proj-notes p { font-size:13px; color:var(--fg-soft); line-height:1.8; max-width:560px; margin-bottom:8px; }
+.proj-notes p:last-child { margin-bottom:0; }
+.proj-notes p strong {
+  font-family:var(--mono); font-weight:600; font-size:10px;
+  letter-spacing:0.2em; color:var(--amber);
+  text-transform:uppercase; margin-right:6px;
+}
+@media (max-width:600px) {
+  .proj { grid-template-columns:1fr; gap:6px; }
+  .proj .arrow { display:inline-block; justify-self:end; }
+  .proj-notes { grid-column:1 / -1; }
+  .proj.open .proj-notes { max-height:480px; }
+}
+
+.services-hint {
+  font-family:var(--mono); font-size:10px; letter-spacing:0.3em;
+  color:var(--fg-muted); margin-top:-12px; margin-bottom:6vh;
+  text-transform:uppercase;
+}
+
+/* ========== §04 联系 ========== */
+#contact { padding:14vh 0 16vh; }
+.contact-list { margin-top:6vh; display:flex; flex-direction:column; }
+.clink {
+  display:grid; grid-template-columns:120px 1fr 1fr auto; gap:20px; align-items:baseline;
+  text-decoration:none; color:var(--fg);
+  padding:24px 0; border-top:1px solid var(--hairline);
+  transition:all 0.35s;
+}
+.clink:last-of-type { border-bottom:1px solid var(--hairline); }
+.clink:hover { padding-left:16px; background:var(--bg-deep); }
+.clink .label { font-family:var(--mono); font-size:11px; letter-spacing:0.2em; color:var(--fg-muted); }
+.clink .handle { font-family:var(--serif); font-size:clamp(16px, 2vw, 22px); font-weight:600; }
+.clink-note {
+  font-family:var(--sans); font-size:13px; color:var(--fg-soft);
+  font-style:italic; line-height:1.5;
+}
+.clink .go { font-family:var(--mono); color:var(--amber); transition:transform 0.35s; }
+.clink:hover .go { transform:translate(6px, -4px); }
+@media (max-width:680px) {
+  .clink { grid-template-columns:120px 1fr auto; }
+  .clink-note { display:none; }
+}
+@media (max-width:500px) {
+  .clink { grid-template-columns:1fr; gap:4px; }
+  .clink-note { display:block; margin-top:4px; }
+  .clink .go { display:none; }
+}
+
+/* ========== FOOTER ========== */
+footer { padding:6vh 0 8vh; text-align:center; position:relative; z-index:1; }
+.footer-mark {
+  width:48px; height:48px; margin:0 auto 20px;
+  border:2px solid var(--amber); border-radius:10px;
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--serif); font-weight:900; font-size:22px; color:var(--amber);
+  cursor:pointer; user-select:none;
+  transition:transform 0.3s cubic-bezier(.34,1.56,.64,1);
+  transform:rotate(-3deg);
+}
+.footer-mark:hover { transform:rotate(0deg) scale(1.1); }
+.footer-mark:active { transform:scale(0.9); }
+footer .fine {
+  font-family:var(--mono); font-size:11px; letter-spacing:0.15em; color:var(--fg-muted); line-height:2.2;
+}
+
+/* ========== 墨迹光点（鼠标尾迹） ========== */
+.ink-dot {
+  position:fixed; width:5px; height:5px; border-radius:50%;
+  background:var(--amber); pointer-events:none; z-index:10000;
+  animation:dotFade 0.8s ease-out forwards;
+}
+@keyframes dotFade { from { opacity:0.5; transform:scale(1); } to { opacity:0; transform:scale(0.15); } }
+
+/* ========== 滚动视差 — 上下层 ========== */
+section {
+  will-change: transform, opacity, filter;
+  transition: transform 0.6s cubic-bezier(.22,1,.36,1), filter 0.6s, opacity 0.6s;
+}
+section.layer-out {
+  transform: translateY(-12px) scale(0.992);
+  filter: blur(1.2px);
+  opacity: 0.62;
+}
+
+/* ========== NOW 面板 ========== */
+#now { padding:14vh 0 10vh; }
+.now-sub {
+  font-family:var(--mono); font-size:10px; letter-spacing:0.25em;
+  color:var(--fg-muted); margin-bottom:6vh; text-transform:uppercase;
+}
+.now-sub .now-date { color:var(--amber); }
+.now-grid {
+  display:grid; grid-template-columns:repeat(3, 1fr); gap:6vw;
+  border-top:1px solid var(--hairline); padding-top:6vh;
+}
+.now-col-label {
+  display:block; font-family:var(--mono); font-size:11px; letter-spacing:0.3em;
+  color:var(--amber); margin-bottom:24px;
+}
+.now-list { list-style:none; display:flex; flex-direction:column; gap:14px; }
+.now-list li {
+  font-family:var(--serif); font-size:clamp(15px, 1.6vw, 17px);
+  line-height:1.6; color:var(--fg);
+  padding-left:14px; position:relative;
+}
+.now-list li::before {
+  content:"·"; position:absolute; left:0; top:0; color:var(--fg-muted);
+}
+@media (max-width:720px) {
+  .now-grid { grid-template-columns:1fr; gap:5vh; }
+}
+
+/* ========== 页面切换动画 ========== */
+body {
+  animation: pageEnter 0.55s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes pageEnter {
+  from { opacity:0; transform:translateY(24px); }
+  to   { opacity:1; transform:none; }
+}
+body.page-leaving {
+  animation: pageLeave 0.32s cubic-bezier(.4,0,.6,1) both;
+  pointer-events:none;
+}
+@keyframes pageLeave {
+  from { opacity:1; transform:none; }
+  to   { opacity:0; transform:translateY(-16px); }
+}
+
+/* 减少动效 */
+@media (prefers-reduced-motion:reduce) {
+  .marquee-inner { animation:none; }
+  .reveal { opacity:1; transform:none; transition:none; }
+  html { scroll-behavior:auto; }
+  #frontispiece.fp-out { opacity:1; filter:none; transform:none; }
+  section.layer-out { transform:none; filter:none; opacity:1; }
+  section { transition:none; }
+  .proj .proj-notes, .proj:hover .proj-notes { max-height:none; opacity:1; }
+  .fp-enter, .fp-toc-item, .mt-item { transition:none; }
+}
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+<div id="ambientGlow"></div>
+<nav id="topNav" aria-label="主导航">
+  <span class="nav-mark">房  语</span>
+  <div class="nav-links">
+    <a href="index.html" class="active">主页</a>
+    <a href="about.html">关于</a>
+    <a href="prompts.html">AI 实验室</a>
+    <a href="works.html">作品</a>
+  </div>
+  <div id="lastUpdated">UPDATED · <span id="lastUpdatedDays">—</span></div>
+</nav>
+
+<!-- ========== 扉页 ========== -->
+<section id="frontispiece" class="page-edge">
+  <div class="frontispiece-inner">
+    <div class="fp-top">
+      <span class="fp-mark reveal">房  语</span>
+      <span class="fp-edition reveal d1">EDITION 2026 · VOL.Ⅰ</span>
+    </div>
+
+    <div class="fp-left">
+      <p class="fp-epigraph reveal">
+        <span class="fp-quote">「</span>
+        一个人有很多层 ——<br>
+        表面的身份，中层的技能，<br>
+        底层的信念。
+        <span class="fp-quote">」</span>
+      </p>
+      <p class="fp-attribution reveal d1">— 卷首语 · PREFACE</p>
+    </div>
+
+    <div class="fp-right">
+      <span class="fp-toc-label reveal d1">目录 · CONTENTS</span>
+      <div class="fp-toc reveal d2">
+        <a class="fp-toc-item" href="#about">
+          <span class="fp-toc-num">01</span>
+          <span class="fp-toc-name">关于 · ABOUT</span>
+          <span class="fp-toc-dots"></span>
+          <span class="fp-toc-page">P.01</span>
+        </a>
+        <a class="fp-toc-item" href="#skills">
+          <span class="fp-toc-num">02</span>
+          <span class="fp-toc-name">技能 · SKILLS</span>
+          <span class="fp-toc-dots"></span>
+          <span class="fp-toc-page">P.02</span>
+        </a>
+        <a class="fp-toc-item" href="#projects">
+          <span class="fp-toc-num">03</span>
+          <span class="fp-toc-name">项目 · PROJECTS</span>
+          <span class="fp-toc-dots"></span>
+          <span class="fp-toc-page">P.03</span>
+        </a>
+        <a class="fp-toc-item" href="#now">
+          <span class="fp-toc-num">04</span>
+          <span class="fp-toc-name">现在 · NOW</span>
+          <span class="fp-toc-dots"></span>
+          <span class="fp-toc-page">P.04</span>
+        </a>
+        <a class="fp-toc-item" href="#contact">
+          <span class="fp-toc-num">05</span>
+          <span class="fp-toc-name">找到我 · FIND ME</span>
+          <span class="fp-toc-dots"></span>
+          <span class="fp-toc-page">P.05</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="fp-enter-wrap">
+      <a class="fp-enter reveal d3" href="#hero">
+        <span>翻  开</span>
+        <span class="fp-enter-arrow">↓</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ========== HERO ========== -->
+<section id="hero">
+  <span class="hero-greeting reveal in">Hello, I'm Aing</span>
+  <h1 class="hero-name reveal in d1">
+    <span class="char">房</span><span class="char">语</span>
+  </h1>
+  <div class="hero-line reveal in d2"></div>
+  <div class="hero-copy reveal in d3">
+    <p class="hero-tagline">
+      <span class="hero-tagline-label">FOCUS / 关注</span>
+      <span class="hero-tagline-copy">长期关注 <em>AI 产品、技能、个人的auto实践、vibecoding和智能体工作流</em></span>
+      <span class="hero-tagline-sub">分享经验 / 增长 / 商业化</span>
+    </p>
+    <p class="hero-positioning">在运营和AI的交界处，找到自己的路。</p>
+  </div>
+  <div class="scroll-hint">往下看</div>
+</section>
+
+<!-- ========== 跑马灯 ========== -->
+<div class="marquee" aria-hidden="true">
+  <div class="marquee-inner">
+    AI<em>/</em>运营<em>/</em>探索<em>/</em>AI<em>/</em>运营<em>/</em>探索<em>/</em>AI<em>/</em>运营<em>/</em>探索<em>/</em>AI<em>/</em>运营<em>/</em>探索<em>/</em>
+  </div>
+</div>
+
+<!-- ========== §01 关于 ========== -->
+<section id="about">
+  <div class="wrap">
+    <span class="sec-label reveal">01 — ABOUT</span>
+    <h2 class="sec-heading reveal d1">不止一个标签</h2>
+    <div class="about-grid">
+      <p class="lead reveal">互联网 → 区块链 → AI。风口从不是运气。</p>
+      <div>
+      <p class="reveal d1">我以从业与创业、技术与趋势的双重视角，观察 AI Agent、技术落地与商业机会。</p>
+      <p class="reveal d2" style="margin-top:16px;">投资人、AI 自媒体、AI 运营和一个小老板，正在寻找下一次创业的突破口。</p>
+        <a class="read-more reveal d3" href="about.html">读一封完整的自我介绍 →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider reveal">层 02 · LAYER</div>
+
+<!-- ========== §01.5 作品展示 ========== -->
+<section id="works-preview">
+  <div class="wrap">
+    <span class="sec-label reveal">01.5 — WORKS</span>
+    <h2 class="sec-heading reveal d1">最近做过的几件东西</h2>
+    <p class="works-hint reveal d2">从作品库中选取 3 个项目 · 完整列表 →</p>
+
+    <div class="works-grid reveal d3">
+      <a class="work-card" href="works.html#visual-atlas">
+        <span class="wc-num">01</span>
+        <h3 class="wc-title">Visual Atlas · 视觉图鉴</h3>
+        <span class="wc-kind">AI PRODUCT · VISUAL ARCHIVE</span>
+        <p class="wc-desc">把 AI 图像案例、Prompt、视觉结构和可复用模板，放进一座可以浏览、拆解、复用的视觉档案库。</p>
+        <span class="wc-arrow">→</span>
+      </a>
+
+      <a class="work-card" href="works.html#fangyu-xiaohei">
+        <span class="wc-num">02</span>
+        <h3 class="wc-title">房语小黑 · 内容视觉 Skill</h3>
+        <span class="wc-kind">OPEN SOURCE · VISUAL SKILL</span>
+        <p class="wc-desc">把文章、观点和项目复盘，变成有角色、有动作、有情绪的视觉现场。</p>
+        <span class="wc-arrow">→</span>
+      </a>
+
+      <a class="work-card" href="works.html#resource-platform">
+        <span class="wc-num">03</span>
+        <h3 class="wc-title">AI 资源通 · 社会资源协同平台</h3>
+        <span class="wc-kind">AI PLATFORM · RESOURCE NETWORK</span>
+        <p class="wc-desc">用 AI 连接企业、资源、需求与合作机会，让分散资源形成可识别、可匹配的协同网络。</p>
+        <span class="wc-arrow">→</span>
+      </a>
+    </div>
+
+    <a class="read-more reveal d3" href="works.html" style="margin-top:48px;">查看完整作品库 →</a>
+  </div>
+</section>
+
+<!-- ========== §02 技能 ========== -->
+<section id="skills">
+  <div class="wrap">
+    <span class="sec-label reveal">02 — SKILLS</span>
+    <h2 class="sec-heading reveal d1">AI × 运营 交叉地带</h2>
+    <p class="skills-tagline reveal d1">把模型能力转化为内容、流程与增长结果</p>
+    <div class="skills-layers">
+      <div class="skill-row reveal">
+        <span class="skill-row-label"><span class="label-zh">在学</span><span class="label-en">LEARNING</span></span>
+        <div class="skill-tags">
+          <span class="tag tag-learning">AI 应用落地</span>
+          <span class="tag tag-learning">Prompt Engineering</span>
+          <span class="tag tag-learning">Agent 工作流</span>
+          <span class="tag tag-learning">RAG / 知识库</span>
+          <span class="tag tag-learning">自动化流程</span>
+          <span class="tag tag-learning">数据分析助手</span>
+        </div>
+      </div>
+
+      <div class="skill-row reveal d1">
+        <span class="skill-row-label"><span class="label-zh">做过</span><span class="label-en">SHIPPED</span></span>
+        <div class="skill-tags">
+          <span class="tag">运营策略</span>
+          <span class="tag">内容创作</span>
+          <span class="tag">用户洞察</span>
+          <span class="tag">数据分析</span>
+          <span class="tag">项目管理</span>
+          <span class="tag">活动策划</span>
+          <span class="tag">增长实验</span>
+          <span class="tag">SOP 搭建</span>
+          <span class="tag">跨部门协作</span>
+        </div>
+      </div>
+
+      <div class="skill-row reveal d2">
+        <span class="skill-row-label"><span class="label-zh">连接</span><span class="label-en">CONNECTING</span></span>
+        <div class="skill-tags">
+          <span class="tag tag-connecting">AI 选题系统</span>
+          <span class="tag tag-connecting">内容生产流水线</span>
+          <span class="tag tag-connecting">用户反馈知识库</span>
+          <span class="tag tag-connecting">自动化日报</span>
+          <span class="tag tag-connecting">运营数据解读助手</span>
+          <span class="tag tag-connecting">项目 SOP Agent</span>
+        </div>
+      </div>
+
+      <div class="skill-row reveal d3">
+        <span class="skill-row-label"><span class="label-zh">能教</span><span class="label-en">CAN TEACH</span></span>
+        <div class="skill-tags">
+          <span class="tag tag-teach">AI 入门路径</span>
+          <span class="tag tag-teach">提示词方法论</span>
+          <span class="tag tag-teach">知识库搭建</span>
+          <span class="tag tag-teach">自动化工作流</span>
+          <span class="tag tag-teach">运营复盘方法</span>
+          <span class="tag tag-teach">团队协作模板</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="skills-quote reveal d3">
+      <span class="sq-mark">— A NOTE</span>
+      会运营的人学 AI，优势不是会用工具，<br>
+      而是知道工具该被放进哪条业务链路里。
+    </div>
+  </div>
+</section>
+
+<div class="section-divider reveal">层 03 · LAYER</div>
+
+<!-- ========== §03 作品 ========== -->
+<section id="projects">
+  <div class="wrap">
+    <span class="sec-label reveal">03 — SERVICES</span>
+    <h2 class="sec-heading reveal d1">我能提供什么</h2>
+    <p class="services-hint reveal d2">点击展开 · TAP TO EXPAND</p>
+    <div class="proj-list">
+      <article class="proj reveal" data-toggle>
+        <span class="idx">01</span>
+        <div class="proj-body">
+          <h3>运营咨询</h3>
+          <p>用多年踩过的坑帮你避开新坑。从内容、增长到团队管理，都可以聊。</p>
+        </div>
+        <span class="arrow">→</span>
+        <div class="proj-notes">
+          <span class="proj-notes-label">你能得到 · WHAT YOU GET</span>
+          <p><strong>形式</strong>：一次 60–90 分钟的深度对话，结束后会拿到一份结构化的"建议清单 + 下一步动作"。</p>
+          <p><strong>我会怎么聊</strong>：先听你讲 30 分钟现状，再问你 3 个没人问过的问题，最后给你 2–3 条可以立刻动手的建议。不卖课、不签长约、不画饼。</p>
+          <p><strong>适合谁</strong>：刚接手一个新业务 / 卡在某个具体问题 / 想找个人"拍板"决策的人。</p>
+          <p><strong>不适合谁</strong>：想听"行业大趋势"的人（这种内容满地都是）/ 想要"系统化培训"的人（可以找课程）。</p>
+        </div>
+      </article>
+
+      <article class="proj reveal" data-toggle>
+        <span class="idx">02</span>
+        <div class="proj-body">
+          <h3>AI 落地陪跑</h3>
+          <p>不是教你怎么用 ChatGPT，而是帮你把 AI 接到你真实的业务流里。</p>
+        </div>
+        <span class="arrow">→</span>
+        <div class="proj-notes">
+          <span class="proj-notes-label">你能得到 · WHAT YOU GET</span>
+          <p><strong>形式</strong>：从诊断 → 选型 → 试点 → 推广的 4 步陪跑，按周推进，4–8 周一个完整周期。</p>
+          <p><strong>我会怎么做</strong>：我进你的业务流陪 2 周，看看你的人怎么工作，找到 1–2 个"AI 能立刻提效"的点，搭起来，跑通，再交给你的人。我不是技术出身，所以更看重"业务能不能跑起来"而不是"技术上多炫"。</p>
+          <p><strong>适合谁</strong>：1–10 人的小团队 / 已经用 ChatGPT 但不知道怎么系统化 / 想在 3 个月内让团队开始"用 AI 干活"而不是"用 AI 玩"的人。</p>
+          <p><strong>不适合谁</strong>：大公司复杂流程（这种要招 AI 产品经理）/ 想要"通用大模型"自研的（这种要找工程团队）。</p>
+        </div>
+      </article>
+
+      <article class="proj reveal" data-toggle>
+        <span class="idx">03</span>
+        <div class="proj-body">
+          <h3>团队内训</h3>
+          <p>给运营/产品/市场团队做 AI 工具内训，让每个人都能用 AI 提效。</p>
+        </div>
+        <span class="arrow">→</span>
+        <div class="proj-notes">
+          <span class="proj-notes-label">你能得到 · WHAT YOU GET</span>
+          <p><strong>形式</strong>：半天到一天的工作坊 + 一份"团队 AI 使用手册"（可内部传阅的 PDF）。</p>
+          <p><strong>我会重点讲什么</strong>：不是教工具，是帮团队建立"什么时候该用 AI、什么时候不该用"的判断力。每个工具的 demo 都用你公司的真实业务举例，不讲通用 PPT。</p>
+          <p><strong>适合谁</strong>：运营/产品/市场团队（10–50 人）/ 想让大家"会用 AI"而不是"知道有 AI"的人 / 部门负责人想给团队做一次系统化扫盲。</p>
+          <p><strong>不适合谁</strong>：纯技术团队（他们有别的学习路径）/ 公司 CEO 单飞（建议先做 1v1 咨询再决定要不要内训）。</p>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ========== NOW ========== -->
+<section id="now">
+  <div class="wrap">
+    <span class="sec-label reveal">NOW · 现在</span>
+    <h2 class="sec-heading reveal d1">最近在做什么</h2>
+    <p class="now-sub reveal d2">每月手动更新一次 · LAST UPDATED <span class="now-date">2026.06</span></p>
+    <div class="now-grid reveal d3">
+      <div class="now-col">
+        <span class="now-col-label">项目 · BUILDING</span>
+        <ul class="now-list">
+          <li>个人网站第三版（这一版）</li>
+          <li>AI 提示词卡片库 v2</li>
+          <li>读书笔记 #07 草稿</li>
+        </ul>
+      </div>
+      <div class="now-col">
+        <span class="now-col-label">在读 · READING</span>
+        <ul class="now-list">
+          <li>《思考，快与慢》</li>
+          <li>《AI 3.0》</li>
+          <li>《纳瓦尔宝典》</li>
+        </ul>
+      </div>
+      <div class="now-col">
+        <span class="now-col-label">工具 · USING</span>
+        <ul class="now-list">
+          <li>Claude Code / Cursor</li>
+          <li>Notion · 飞书</li>
+          <li>Raycast · Alfred</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider reveal">层 04 · LAYER</div>
+
+<!-- ========== §04 联系 ========== -->
+<section id="contact">
+  <div class="wrap">
+    <span class="sec-label reveal">04 — FIND ME</span>
+    <h2 class="sec-heading reveal d1">找到我</h2>
+    <a class="read-more reveal d2" href="about.html" style="margin-top:-12px;margin-bottom:6vh;display:inline-block;">想知道我更多？读完整介绍 →</a>
+    <div class="contact-list reveal d2">
+      <a class="clink" href="https://github.com/fuxiworkspace-lgtm" target="_blank" rel="noopener">
+        <span class="label">GITHUB</span>
+        <span class="handle">fuxiworkspace-lgtm</span>
+        <span class="clink-note">代码和小项目都在这</span>
+        <span class="go">↗</span>
+      </a>
+      <a class="clink" href="mailto:fuxiworkspace@gmail.com">
+        <span class="label">EMAIL</span>
+        <span class="handle">fuxiworkspace@gmail.com</span>
+        <span class="clink-note">合作 / 提问 / 闲聊都可以</span>
+        <span class="go">↗</span>
+      </a>
+      <a class="clink" href="https://x.com/fangyuAing" target="_blank" rel="noopener">
+        <span class="label">TWITTER</span>
+        <span class="handle">@fangyuAing</span>
+        <span class="clink-note">偶尔转一些 AI 的观察</span>
+        <span class="go">↗</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ========== FOOTER ========== -->
+<footer>
+  <div class="footer-mark" id="footerMark" title="点击">语</div>
+  <p class="fine">© 2026 — 房语 Aing</p>
+</footer>
+
+<!-- ========== 右侧 mini-toc ========== -->
+<nav id="miniToc" aria-label="目录">
+  <a class="mt-item" data-target="about" href="#about">
+    <span class="mt-num">01</span>
+    <span class="mt-dot"></span>
+    <span class="mt-name">关于</span>
+  </a>
+  <a class="mt-item" data-target="skills" href="#skills">
+    <span class="mt-num">02</span>
+    <span class="mt-dot"></span>
+    <span class="mt-name">技能</span>
+  </a>
+  <a class="mt-item" data-target="projects" href="#projects">
+    <span class="mt-num">03</span>
+    <span class="mt-dot"></span>
+    <span class="mt-name">项目</span>
+  </a>
+  <a class="mt-item" data-target="now" href="#now">
+    <span class="mt-num">04</span>
+    <span class="mt-dot"></span>
+    <span class="mt-name">现在</span>
+  </a>
+  <a class="mt-item" data-target="contact" href="#contact">
+    <span class="mt-num">05</span>
+    <span class="mt-dot"></span>
+    <span class="mt-name">联系</span>
+  </a>
+</nav>
+
+<script>
+/* ========== 页面切换：拦截导航链接 · 触发 leave 动画 ========== */
+(function () {
+  const isInterPageLink = (a) => {
+    if (!a || a.target === "_blank") return false;
+    if (a.hasAttribute("download")) return false;
+    if (a.origin !== location.origin && a.href.startsWith("file:")) return false;
+    if (a.pathname === location.pathname && !a.hash) return false;  // 同页
+    // 只对同站点、不同文件名的链接生效
+    if (a.pathname.endsWith(".html") && a.pathname !== location.pathname) return true;
+    return false;
+  };
+
+  document.addEventListener("click", (e) => {
+    const a = e.target.closest("a");
+    if (!a || !isInterPageLink(a)) return;
+    e.preventDefault();
+    document.body.classList.add("page-leaving");
+    setTimeout(() => { location.href = a.href; }, 280);
+  });
+})();
+
+/* ========== 最近更新指示 ========== */
+(function () {
+  const start = new Date(2026, 5, 22); // 2026-06-22 — 手动每月改一次
+  const today = new Date();
+  const days = Math.max(0, Math.floor((today - start) / 86400000));
+  document.getElementById("lastUpdatedDays").textContent =
+    days === 0 ? "TODAY" : days + "D AGO";
+})();
+
+/* ========== 扉页滚动退出 ========== */
+const fp = document.getElementById("frontispiece");
+window.addEventListener("scroll", () => {
+  const y = window.scrollY;
+  const fpBottom = fp.offsetTop + fp.offsetHeight;
+  if (y > fpBottom * 0.6) fp.classList.add("fp-out");
+  else fp.classList.remove("fp-out");
+}, { passive: true });
+
+/* ========== mini-toc 高亮当前章节 ========== */
+const mtItems = document.querySelectorAll("#miniToc .mt-item");
+const mtSections = ["about","skills","projects","now","contact"].map(id => document.getElementById(id));
+function updateMiniToc() {
+  const mid = window.scrollY + window.innerHeight * 0.4;
+  let active = mtSections[0];
+  mtSections.forEach(s => { if (s && s.offsetTop <= mid) active = s; });
+  mtItems.forEach(it => it.classList.toggle("active", it.dataset.target === active.id));
+}
+window.addEventListener("scroll", updateMiniToc, { passive: true });
+updateMiniToc();
+
+/* ========== §03 主营业务 · 点击展开 ========== */
+document.querySelectorAll(".proj[data-toggle]").forEach(proj => {
+  proj.addEventListener("click", (e) => {
+    // 如果点的是链接/按钮就不接管（留给以后放"了解详情"用）
+    if (e.target.closest("a, button")) return;
+    proj.classList.toggle("open");
+  });
+});
+
+/* ========== 进度线 ========== */
+const p = document.getElementById("progress");
+window.addEventListener("scroll", () => {
+  const h = document.documentElement, max = h.scrollHeight - h.clientHeight;
+  p.style.width = (max > 0 ? (h.scrollTop / max) * 100 : 0) + "%";
+}, { passive: true });
+
+/* ========== Intersection Observer — 滚动入场 ========== */
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
+}, { threshold: 0.12 });
+document.querySelectorAll(".reveal").forEach(el => io.observe(el));
+
+/* ========== 视差：远/近层 ========== */
+const layerObs = new IntersectionObserver((entries) => {
+  if (window.innerWidth < 720) return;
+  entries.forEach(e => {
+    const r = e.boundingClientRect;
+    if (!e.isIntersecting && r.top < 0) {
+      e.target.classList.add("layer-out");
+    } else if (e.isIntersecting) {
+      e.target.classList.remove("layer-out");
+    }
+  });
+}, { threshold: 0, rootMargin: "-10% 0px -10% 0px" });
+document.querySelectorAll("section[id]").forEach(s => layerObs.observe(s));
+
+/* ========== 环境光晕跟随鼠标 ========== */
+const glow = document.getElementById("ambientGlow");
+window.addEventListener("mousemove", (e) => {
+  glow.style.left = e.clientX + "px";
+  glow.style.top = e.clientY + "px";
+}, { passive: true });
+
+/* ========== Hero 大字对鼠标的微响应 ========== */
+const chars = document.querySelectorAll(".hero-name .char");
+window.addEventListener("mousemove", (e) => {
+  if (window.scrollY > window.innerHeight * 0.6) return;
+  const cx = window.innerWidth / 2;
+  const mx = (e.clientX - cx) / cx;
+  chars.forEach((c, i) => {
+    const d = (i - (chars.length - 1) / 2) * 0.6;
+    c.style.transform = `translateY(${mx * d * 6}px)`;
+  });
+}, { passive: true });
+
+/* ========== 琥珀色光点尾迹（桌面端） ========== */
+let lastDot = 0;
+window.addEventListener("mousemove", (e) => {
+  const now = performance.now();
+  if (now - lastDot < 70 || window.innerWidth < 720) return;
+  lastDot = now;
+  const d = document.createElement("div");
+  d.className = "ink-dot";
+  d.style.left = e.clientX - 2 + "px";
+  d.style.top = e.clientY - 2 + "px";
+  document.body.appendChild(d);
+  setTimeout(() => d.remove(), 800);
+}, { passive: true });
+
+/* ========== 彩蛋：印章连点三下 → 反转色 ========== */
+const mark = document.getElementById("footerMark");
+let clicks = 0, timer = null;
+mark.addEventListener("click", () => {
+  clicks++;
+  clearTimeout(timer);
+  timer = setTimeout(() => clicks = 0, 800);
+  if (clicks >= 3) {
+    clicks = 0;
+    document.body.style.transition = "filter 0.6s";
+    const inv = document.body.style.filter;
+    document.body.style.filter = inv ? "" : "invert(0.88) hue-rotate(180deg)";
+    mark.textContent = inv ? "语" : "反";
+  }
+});
+
+/* ========== 控制台彩蛋 ========== */
+console.log(
+  "%c👋 嗨，你打开了控制台。\n%c我是房语(Aing)，运营 × AI，正在做这本《层次 Layers》。\n%c翻到哪一页了？",
+  "font-size:18px;font-weight:700;color:#d4913e;",
+  "font-size:12px;color:#7a7265;line-height:1.8;",
+  "font-size:11px;color:#b0a99c;letter-spacing:0.2em;"
+);
+</script>
+</body>
+</html>
