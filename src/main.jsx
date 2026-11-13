@@ -42,7 +42,7 @@ import {
 } from 'lucide-react';
 import './styles.css';
 import { isSupabaseConfigured, supabase } from './supabaseClient';
-import wechatCommunityImage from './assets/wechat-community.png';
+import wechatCommunityImage from './assets/wechat-community.jpg';
 import skillExampleImage from '../agents/skills/gpt-image-2-style-library/assets/city-life-system-map.png';
 
 const fallbackRepoUrl = 'https://github.com/fuxiworkspace-lgtm/gpt-image2-visual-atlas';
@@ -60,6 +60,7 @@ const copy = {
     navCases: 'Cases',
     navSkill: 'Skill',
     navTemplates: 'Templates',
+    navVisualAtlas: 'Visual Atlas',
     navReversePrompt: 'Reverse Prompt',
     navCommunity: 'Community',
     navSponsor: 'API',
@@ -402,6 +403,7 @@ const copy = {
     navCases: '案例',
     navSkill: '技能',
     navTemplates: '模板',
+    navVisualAtlas: '视觉图鉴',
     navReversePrompt: '反推提示词',
     navCommunity: '交流群',
     navSponsor: 'API',
@@ -4733,6 +4735,11 @@ function App() {
                 <a href="#gallery">{t.navCases}</a>
                 <a href="#templates">{t.navTemplates}</a>
                 <a href="#agent-skill">{t.navSkill}</a>
+                <a className="visualAtlasNavLink" href="https://guide.fangyuai.xyz" target="_blank" rel="noreferrer">
+                  <Sparkles size={15} aria-hidden="true" />
+                  {t.navVisualAtlas}
+                  <ArrowUpRight size={13} aria-hidden="true" />
+                </a>
                 <CommunityNavItem language={language} />
                 <a
                   className="sponsorNavLink"
