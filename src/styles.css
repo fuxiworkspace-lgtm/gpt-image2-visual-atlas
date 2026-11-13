@@ -138,6 +138,26 @@ button {
   color: #ffffff;
 }
 
+.topbar nav a.visualAtlasNavLink {
+  min-height: 36px;
+  gap: 7px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  border-radius: 999px;
+  background: linear-gradient(110deg, #8b5cf6 0%, #ec4899 52%, #f97316 100%);
+  color: #fff;
+  box-shadow: 0 5px 18px rgba(214, 55, 165, 0.28);
+  white-space: nowrap;
+}
+.topbar nav a.visualAtlasNavLink:hover,
+.topbar nav a.visualAtlasNavLink:focus-visible {
+  background: linear-gradient(110deg, #7c3aed 0%, #db2777 52%, #ea580c 100%);
+  color: #fff;
+  box-shadow: 0 7px 24px rgba(214, 55, 165, 0.42);
+  transform: translateY(-1px);
+}
+.topbar nav a.visualAtlasNavLink svg { color: currentColor; }
+
 .topbar nav a.sponsorNavLink {
   color: #ffd7e8;
 }
