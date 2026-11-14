@@ -1,4 +1,4 @@
-import { getSupabaseAdminClient, isSupabaseServerConfigured } from '../_lib/supabase.js';
+import { getSupabaseAdminClient, isSupabaseServerConfigured } from '../supabase.js';
 import {
   completeCreditPackOrder,
   grantMembershipCredits,
@@ -6,7 +6,7 @@ import {
   isStripeConfigured,
   readRawBody,
   upsertMembershipFromSubscription
-} from '../_lib/billing.js';
+} from '../billing.js';
 
 export const config = {
   api: {

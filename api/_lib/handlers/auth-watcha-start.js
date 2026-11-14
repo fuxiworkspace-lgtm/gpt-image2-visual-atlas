@@ -7,7 +7,7 @@ import {
   randomToken,
   safeReturnTo,
   WATCHA_COOKIE_NAMES
-} from '../../_lib/watcha.js';
+} from '../watcha.js';
 
 function redirect(res, location, cookies = []) {
   if (cookies.length) res.setHeader('Set-Cookie', cookies);

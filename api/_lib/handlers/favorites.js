@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { getAuthContext } from './_lib/supabase.js';
-import { readJsonBody } from './_lib/billing.js';
+import { getAuthContext } from '../supabase.js';
+import { readJsonBody } from '../billing.js';
 
 let validCaseIds;
 

@@ -1,5 +1,5 @@
-import { getAuthContext, getProfileById } from '../../_lib/supabase.js';
-import { readJsonBody } from '../../_lib/billing.js';
+import { getAuthContext, getProfileById } from '../supabase.js';
+import { readJsonBody } from '../billing.js';
 
 function json(res, status, payload) {
   res.status(status).json(payload);

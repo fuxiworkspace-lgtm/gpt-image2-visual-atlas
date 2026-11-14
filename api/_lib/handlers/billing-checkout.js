@@ -1,4 +1,4 @@
-import { getAuthContext, getProfileById, isSupabaseServerConfigured } from '../_lib/supabase.js';
+import { getAuthContext, getProfileById, isSupabaseServerConfigured } from '../supabase.js';
 import {
   checkoutLineItem,
   createPaymentOrder,
@@ -9,7 +9,7 @@ import {
   isStripeConfigured,
   markOrderCheckoutCreated,
   readJsonBody
-} from '../_lib/billing.js';
+} from '../billing.js';
 
 function json(res, status, payload) {
   res.status(status).json(payload);

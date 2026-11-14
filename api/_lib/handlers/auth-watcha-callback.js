@@ -1,4 +1,4 @@
-import { ensureProfileForUser, getSupabaseAdminClient, isSupabaseServerConfigured } from '../../_lib/supabase.js';
+import { ensureProfileForUser, getSupabaseAdminClient, isSupabaseServerConfigured } from '../supabase.js';
 import {
   authErrorRedirect,
   exchangeCodeForToken,
@@ -10,7 +10,7 @@ import {
   WATCHA_COOKIE_NAMES,
   watchaFallbackEmail,
   watchaUserMetadata
-} from '../../_lib/watcha.js';
+} from '../watcha.js';
 
 function redirect(res, location, secureCookie = true) {
   const cookies = watchaCookieHeaders(secureCookie);

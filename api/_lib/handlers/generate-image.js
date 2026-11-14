@@ -2,7 +2,7 @@ import {
   getAuthContext,
   getProfileById,
   isSupabaseServerConfigured
-} from './_lib/supabase.js';
+} from '../supabase.js';
 
 const MAX_PROMPT_LENGTH = 6000;
 const DEFAULT_CIYUAN_BASE_URL = 'https://ciyuan.today';

@@ -1,5 +1,5 @@
-import { getAuthContext, getProfileById, isSupabaseServerConfigured } from '../_lib/supabase.js';
-import { getBillingCatalog, isStripeConfigured } from '../_lib/billing.js';
+import { getAuthContext, getProfileById, isSupabaseServerConfigured } from '../supabase.js';
+import { getBillingCatalog, isStripeConfigured } from '../billing.js';
 
 function json(res, status, payload) {
   res.status(status).json(payload);

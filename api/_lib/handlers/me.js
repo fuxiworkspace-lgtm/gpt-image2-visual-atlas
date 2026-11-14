@@ -2,8 +2,8 @@ import {
   getAuthContext,
   getProfileById,
   isSupabaseServerConfigured
-} from './_lib/supabase.js';
-import { readJsonBody } from './_lib/billing.js';
+} from '../supabase.js';
+import { readJsonBody } from '../billing.js';
 
 function json(res, status, payload) {
   res.status(status).json(payload);

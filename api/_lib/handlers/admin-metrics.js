@@ -1,5 +1,5 @@
-import { getAuthContext } from '../_lib/supabase.js';
-import { getGa4Traffic, isGa4Configured } from '../_lib/ga4.js';
+import { getAuthContext } from '../supabase.js';
+import { getGa4Traffic, isGa4Configured } from '../ga4.js';
 
 function json(res, status, payload) {
   res.status(status).json(payload);

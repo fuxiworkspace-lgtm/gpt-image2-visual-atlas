@@ -1,4 +1,4 @@
-import { getAuthContext } from '../_lib/supabase.js';
+import { getAuthContext } from '../supabase.js';
 
 function json(res, status, payload) {
   res.status(status).json(payload);
