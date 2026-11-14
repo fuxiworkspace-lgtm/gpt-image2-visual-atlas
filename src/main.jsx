@@ -4735,7 +4735,7 @@ function App() {
                 <a href="#gallery">{t.navCases}</a>
                 <a href="#templates">{t.navTemplates}</a>
                 <a href="#agent-skill">{t.navSkill}</a>
-                <a className="visualAtlasNavLink" href="https://guide.fangyuai.xyz" target="_blank" rel="noreferrer">
+                <a className="visualAtlasNavLink" href="https://guide.fangyuai.xyz" target="_blank" rel="noreferrer" title={language === 'zh' ? '浏览 GPT-Image 2 生图案例与提示词' : 'Browse GPT-Image 2 image cases and prompts'}>
                   <Sparkles size={15} aria-hidden="true" />
                   {t.navVisualAtlas}
                   <ArrowUpRight size={13} aria-hidden="true" />
